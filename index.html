@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>えもじべ — 絵文字で役を作る取り合いゲーム</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #2a1a0a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Hiragino Maru Gothic Pro', 'Yu Gothic', 'BIZ UDGothic', sans-serif;
+      overflow: hidden;
+    }
+    .wood-bg {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #3d2b1a 0%, #2a1a0a 100%);
+      z-index: 0;
+    }
+    .wood-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        170deg,
+        transparent,
+        transparent 48px,
+        rgba(74, 53, 32, 0.25) 48px,
+        rgba(74, 53, 32, 0.25) 50px
+      );
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 24px;
+    }
+    .notebook {
+      background: #f8f4e8;
+      border-radius: 8px;
+      padding: 32px 40px;
+      width: 320px;
+      box-shadow: 4px 4px 20px rgba(0,0,0,0.4);
+      border: 1px solid #e0d8c0;
+      background-image:
+        linear-gradient(rgba(200, 208, 232, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 208, 232, 0.4) 1px, transparent 1px);
+      background-size: 20px 20px;
+      text-align: center;
+    }
+    .title {
+      font-size: 52px;
+      font-weight: bold;
+      color: #4a3520;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #8a7560;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+    .tagline {
+      font-size: 14px;
+      color: #6a5a40;
+      margin-bottom: 8px;
+    }
+    .deco-emojis {
+      font-size: 24px;
+      letter-spacing: 8px;
+      margin-top: 16px;
+    }
+    .play-btn {
+      display: inline-block;
+      background: #d4a853;
+      color: #2a1a0a;
+      font-size: 18px;
+      font-weight: bold;
+      font-family: inherit;
+      padding: 14px 36px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .play-btn:hover {
+      background: #e8c070;
+      transform: scale(1.04);
+    }
+    .play-btn:active {
+      transform: scale(0.97);
+    }
+    .version {
+      color: #6a5040;
+      font-size: 11px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="wood-bg"></div>
+  <div class="container">
+    <div class="notebook">
+      <div class="deco-emojis">🎲 🌸 ⭐</div>
+      <div class="title">えもじべ</div>
+      <div class="subtitle">emoji + jibe</div>
+      <div class="tagline">絵文字で役を作る取り合いゲーム</div>
+    </div>
+    <a href="game.html" class="play-btn">ソロモードで遊ぶ</a>
+    <div class="version">v0.1.0 — やまし制作</div>
+  </div>
+</body>
+</html>

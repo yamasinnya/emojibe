@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>えもじべ — バトルフィールド</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #2a1f14; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Hiragino Maru Gothic Pro', 'BIZ UDGothic', sans-serif; }
+    #game-container { border-radius: 8px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    h1 { color: #f5e6c8; font-size: 14px; letter-spacing: 4px; margin-bottom: 12px; opacity: 0.6; }
+  </style>
+</head>
+<body>
+<h1>✦ えもじべ ✦</h1>
+<div id="game-container"></div>
+<script>
+class FieldScene extends Phaser.Scene {
+  constructor() { super({ key: 'FieldScene' }); }
+
+  preload() {
+    // テクスチャを動的生成
+  }
+
+  create() {
+    const W = this.scale.width;
+    const H = this.scale.height;
+
+    // ===============================
+    // 背景：机の木目
+    // ===============================
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x3d2b1a, 0x3d2b1a, 0x2a1a0a, 0x2a1a0a, 1);
+    bg.fillRect(0, 0, W, H);
+
+    // 木目ライン
+    for (let i = 0; i < 12; i++) {
+      const g = this.add.graphics();
+      g.lineStyle(1, 0x4a3520, 0.3);
+      g.beginPath();
+      g.moveTo(0, i * 55 + Phaser.Math.Between(-10, 10));
+      g.lineTo(W, i * 55 + Phaser.Math.Between(-10, 10));
+      g.strokePath();
+    }
+
+    // ===============================
+    // 場のノート（方眼紙風）
+    // ===============================
+    this.createNotebook(W/2, H/2 - 20, 480, 260);
+
+    // ===============================
+    // 場の絵文字シール（20枚）
+    // ===============================
+    const fieldEmojis = ['🦁','🍋','⚔️','🚀','🌹','🍕','⚡','🐬','👑','🎸',
+                          '🍺','🌸','💣','🦈','🎭','❄️','🔥','🇯🇵','💎','🎲'];
+
+    const cols = 5, rows = 4;
+    const startX = W/2 - 180;
+    const startY = H/2 - 95;
+    const gapX = 75, gapY = 58;
+
+    this.fieldStickers = [];
+    fieldEmojis.forEach((emoji, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col * gapX + Phaser.Math.Between(-4, 4);
+      const y = startY + row * gapY + Phaser.Math.Between(-3, 3);
+      const angle = Phaser.Math.Between(-8, 8);
+      const sticker = this.createSticker(x, y, emoji, angle, 0xfffef0);
+      this.fieldStickers.push(sticker);
+    });
+
+    // ===============================
+    // プレイヤーの手帳（左下）
+    // ===============================
+    this.createHandbook(130, H - 90, '自分の手帳', 0x4a7c59);
+
+    // 自分の手札シール
+    const myHand = ['🐱','🇬🇧','🗼','☕','🍩','🎤','🛡️'];
+    myHand.forEach((emoji, i) => {
+      const x = 40 + i * 52;
+      const y = H - 88 + Phaser.Math.Between(-3, 3);
+      const angle = Phaser.Math.Between(-10, 10);
+      this.createSticker(x, y, emoji, angle, 0xf0fff0, 0.85);
+    });
+
+    // 非公開マーク
+    const secret = this.add.graphics();
+    secret.fillStyle(0x2d5a3d, 0.9);
+    secret.fillRoundedRect(10, H - 115, 36, 36, 6);
+    this.add.text(28, H - 97, '？', {
+      fontSize: '18px', color: '#a8d5b5'
+    }).setOrigin(0.5);
+
+    // ===============================
+    // 相手の手帳（右下）
+    // ===============================
+    this.createHandbook(W - 130, H - 90, '相手の手帳', 0x7c4a4a);
+
+    // 相手の手札（ほぼ公開）
+    const oppHand = ['🦄','🎹','🥁','🍓','⭐','😢','💀'];
+    oppHand.forEach((emoji, i) => {
+      const x = W - 240 + i * 52;
+      const y = H - 88 + Phaser.Math.Between(-3, 3);
+      const angle = Phaser.Math.Between(-10, 10);
+      this.createSticker(x, y, emoji, angle, 0xfff0f0, 0.85);
+    });
+
+    // 相手の非公開マーク
+    const secret2 = this.add.graphics();
+    secret2.fillStyle(0x5a2d2d, 0.9);
+    secret2.fillRoundedRect(W - 46, H - 115, 36, 36, 6);
+    this.add.text(W - 28, H - 97, '？', {
+      fontSize: '18px', color: '#d5a8a8'
+    }).setOrigin(0.5);
+
+    // ===============================
+    // ターン表示
+    // ===============================
+    const turnBg = this.add.graphics();
+    turnBg.fillStyle(0x1a1a1a, 0.7);
+    turnBg.fillRoundedRect(W/2 - 60, 12, 120, 32, 16);
+    this.add.text(W/2, 28, 'ターン 3 / 6', {
+      fontSize: '13px', color: '#f5e6c8', fontFamily: 'sans-serif'
+    }).setOrigin(0.5);
+
+    // ===============================
+    // スコア表示
+    // ===============================
+    // 自分
+    const scoreBg1 = this.add.graphics();
+    scoreBg1.fillStyle(0x2d5a3d, 0.8);
+    scoreBg1.fillRoundedRect(10, 12, 90, 32, 8);
+    this.add.text(55, 28, '自分  0pt', {
+      fontSize: '12px', color: '#a8d5b5', fontFamily: 'sans-serif'
+    }).setOrigin(0.5);
+
+    // 相手
+    const scoreBg2 = this.add.graphics();
+    scoreBg2.fillStyle(0x5a2d2d, 0.8);
+    scoreBg2.fillRoundedRect(W - 100, 12, 90, 32, 8);
+    this.add.text(W - 55, 28, '相手  0pt', {
+      fontSize: '12px', color: '#d5a8a8', fontFamily: 'sans-serif'
+    }).setOrigin(0.5);
+
+    // ===============================
+    // 取るボタン
+    // ===============================
+    const takeBtnBg = this.add.graphics();
+    takeBtnBg.fillStyle(0xd4a853, 1);
+    takeBtnBg.fillRoundedRect(W/2 - 50, H - 38, 100, 28, 14);
+    const takeBtn = this.add.text(W/2, H - 24, 'シールを取る', {
+      fontSize: '13px', color: '#2a1a0a', fontFamily: 'sans-serif', fontStyle: 'bold'
+    }).setOrigin(0.5).setInteractive();
+
+    takeBtn.on('pointerover', () => {
+      takeBtnBg.clear();
+      takeBtnBg.fillStyle(0xe8c070, 1);
+      takeBtnBg.fillRoundedRect(W/2 - 50, H - 38, 100, 28, 14);
+    });
+    takeBtn.on('pointerout', () => {
+      takeBtnBg.clear();
+      takeBtnBg.fillStyle(0xd4a853, 1);
+      takeBtnBg.fillRoundedRect(W/2 - 50, H - 38, 100, 28, 14);
+    });
+
+    // ===============================
+    // シールのホバー演出
+    // ===============================
+    this.fieldStickers.forEach(sticker => {
+      sticker.container.setInteractive(
+        new Phaser.Geom.Rectangle(-22, -22, 44, 44),
+        Phaser.Geom.Rectangle.Contains
+      );
+      sticker.container.on('pointerover', () => {
+        this.tweens.add({
+          targets: sticker.container,
+          scaleX: 1.2, scaleY: 1.2,
+          duration: 120, ease: 'Back.out'
+        });
+      });
+      sticker.container.on('pointerout', () => {
+        this.tweens.add({
+          targets: sticker.container,
+          scaleX: 1, scaleY: 1,
+          duration: 120
+        });
+      });
+      sticker.container.on('pointerdown', () => {
+        this.tweens.add({
+          targets: sticker.container,
+          y: sticker.container.y - 30,
+          alpha: 0,
+          duration: 300,
+          onComplete: () => sticker.container.setVisible(false)
+        });
+      });
+    });
+  }
+
+  createNotebook(x, y, w, h) {
+    // ノート外枠（影）
+    const shadow = this.add.graphics();
+    shadow.fillStyle(0x000000, 0.3);
+    shadow.fillRoundedRect(x - w/2 + 4, y - h/2 + 4, w, h, 6);
+
+    // ノート本体
+    const nb = this.add.graphics();
+    nb.fillStyle(0xf8f4e8, 1);
+    nb.fillRoundedRect(x - w/2, y - h/2, w, h, 6);
+    nb.lineStyle(1, 0xe0d8c0, 1);
+    nb.strokeRoundedRect(x - w/2, y - h/2, w, h, 6);
+
+    // 方眼線
+    const grid = this.add.graphics();
+    grid.lineStyle(0.5, 0xc8d0e8, 0.5);
+    for (let gx = x - w/2 + 20; gx < x + w/2; gx += 20) {
+      grid.beginPath();
+      grid.moveTo(gx, y - h/2);
+      grid.lineTo(gx, y + h/2);
+      grid.strokePath();
+    }
+    for (let gy = y - h/2 + 20; gy < y + h/2; gy += 20) {
+      grid.beginPath();
+      grid.moveTo(x - w/2, gy);
+      grid.lineTo(x + w/2, gy);
+      grid.strokePath();
+    }
+
+    // ノートの綴じ穴
+    for (let i = 0; i < 4; i++) {
+      const hole = this.add.graphics();
+      hole.fillStyle(0xd0c8b0, 1);
+      hole.fillCircle(x - w/2 + 14, y - h/2 + 30 + i * 55, 5);
+      hole.lineStyle(1, 0xb8b0a0, 1);
+      hole.strokeCircle(x - w/2 + 14, y - h/2 + 30 + i * 55, 5);
+    }
+
+    // ラベル
+    this.add.text(x, y - h/2 + 12, '場　の　シール', {
+      fontSize: '11px', color: '#a0988c',
+      fontFamily: 'sans-serif', letterSpacing: 3
+    }).setOrigin(0.5);
+  }
+
+  createHandbook(x, y, label, color) {
+    const w = 240, h = 80;
+    const nb = this.add.graphics();
+    nb.fillStyle(color, 0.15);
+    nb.fillRoundedRect(x - w/2, y - h/2, w, h, 8);
+    nb.lineStyle(1.5, color, 0.4);
+    nb.strokeRoundedRect(x - w/2, y - h/2, w, h, 8);
+
+    this.add.text(x, y - h/2 + 10, label, {
+      fontSize: '10px',
+      color: color === 0x4a7c59 ? '#a8d5b5' : '#d5a8a8',
+      fontFamily: 'sans-serif', letterSpacing: 2
+    }).setOrigin(0.5);
+  }
+
+  createSticker(x, y, emoji, angle, bgColor, alpha = 1) {
+    const container = this.add.container(x, y);
+    container.setAlpha(alpha);
+
+    // シール背景
+    const bg = this.add.graphics();
+    bg.fillStyle(bgColor, 0.92);
+    bg.fillRoundedRect(-20, -20, 40, 40, 6);
+    bg.lineStyle(1, 0xd0c8b0, 0.6);
+    bg.strokeRoundedRect(-20, -20, 40, 40, 6);
+
+    // 絵文字
+    const text = this.add.text(0, 1, emoji, {
+      fontSize: '22px'
+    }).setOrigin(0.5);
+
+    container.add([bg, text]);
+    container.setAngle(angle);
+
+    // 登場アニメ
+    container.setScale(0);
+    this.tweens.add({
+      targets: container,
+      scaleX: 1, scaleY: 1,
+      duration: 300,
+      delay: Math.random() * 400,
+      ease: 'Back.out'
+    });
+
+    return { container, emoji };
+  }
+
+  update() {}
+}
+
+new Phaser.Game({
+  type: Phaser.AUTO,
+  width: 640,
+  height: 420,
+  backgroundColor: '#2a1a0a',
+  parent: 'game-container',
+  scene: FieldScene
+});
+</script>
+</body>
+</html>

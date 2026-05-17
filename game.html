@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>えもじべ</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #2a1a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #game-container canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<div id="game-container"></div>
+<script src="js/emojis.js"></script>
+<script src="js/scenes/BootScene.js"></script>
+<script src="js/scenes/TopScene.js"></script>
+<script src="js/scenes/FieldScene.js"></script>
+<script src="js/scenes/HandScene.js"></script>
+<script src="js/scenes/ResultScene.js"></script>
+<script src="js/config.js"></script>
+</body>
+</html>
