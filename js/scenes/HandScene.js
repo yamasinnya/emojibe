@@ -141,7 +141,11 @@ class HandScene extends Phaser.Scene {
       'text-align: center',
       'outline: none',
       'color: #4a3520',
+      'display: block',
+      'margin: 0',
+      'box-sizing: border-box',
     ].join(';');
+    input.setOrigin(0.5, 0.5);
 
     this.inputEl = input;
   }
@@ -317,6 +321,7 @@ class HandScene extends Phaser.Scene {
 
     this.selectedIndices.clear();
     this.inputEl.node.value = '';
+    this.inputEl.node.blur();
     this.selectionCountText.setText('');
     this.updateRoleList();
     this.showFlash(`「${roleName}」を追加！`, 0x4a7c59);
