@@ -1,4 +1,6 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -7,6 +9,10 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
+}
+
+if (file_exists(__DIR__ . '/db_config.php')) {
+    require_once __DIR__ . '/db_config.php';
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -18,8 +24,11 @@ if (!$data || empty($data['emojis']) || empty($data['role_name'])) {
 
 $emojiWithNames = '';
 if (!empty($data['emoji_names'])) {
-    $pairs = array_map(null, $data['emojis'], $data['emoji_names']);
-    $emojiWithNames = implode('、', array_map(fn($p) => "{$p[0]}({$p[1]})", $pairs));
+    $emojiWithNames = implode('、', array_map(
+        fn($e, $n) => "{$e}({$n})",
+        $data['emojis'],
+        $data['emoji_names']
+    ));
 } else {
     $emojiWithNames = implode('', $data['emojis']);
 }
@@ -44,7 +53,7 @@ AIが知らないマイナーネタは低得点で構いません（御愛嬌）
 {"score": 数字, "comment": "一言コメント（日本語、20文字以内）"}
 PROMPT;
 
-$apiKey = getenv('ANTHROPIC_API_KEY');
+$apiKey = defined('ANTHROPIC_API_KEY') ? ANTHROPIC_API_KEY : getenv('ANTHROPIC_API_KEY');
 if (!$apiKey) {
     echo json_encode(['score' => 3, 'comment' => 'なかなかいい組み合わせ！']);
     exit;
