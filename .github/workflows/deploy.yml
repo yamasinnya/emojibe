@@ -10,6 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Create DB config
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          printf '<?php\ndefine("DB_HOST", "%s");\ndefine("DB_NAME", "%s");\ndefine("DB_USER", "%s");\ndefine("DB_PASS", "%s");\n' \
+            "$DB_HOST" "$DB_NAME" "$DB_USER" "$DB_PASS" > api/db_config.php
+
       - name: Deploy via SFTP (lftp)
         env:
           SFTP_HOST: ${{ secrets.FTP_SERVER }}
