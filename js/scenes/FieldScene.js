@@ -296,7 +296,7 @@ class FieldScene extends Phaser.Scene {
   showRoleMakeButton() {
     const W = this.scale.width;
     const H = this.scale.height;
-    const btnY = H - 48;
+    const btnY = H - 170;
     const btnW = 200;
     const btnH = 42;
 

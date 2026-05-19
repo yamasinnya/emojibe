@@ -57,7 +57,7 @@ class HandScene extends Phaser.Scene {
     const nbX = 12;
     const nbY = 56;
     const nbW = W - 24;
-    const nbH = 290;
+    const nbH = 170;
 
     const shadow = this.add.graphics();
     shadow.fillStyle(0x000000, 0.2);
@@ -96,9 +96,9 @@ class HandScene extends Phaser.Scene {
 
   createRolePanel(W, H) {
     const nbX = 12;
-    const nbY = 360;
+    const nbY = 234;
     const nbW = W - 24;
-    const nbH = 200;
+    const nbH = 123;
 
     const nb = this.add.graphics();
     nb.fillStyle(0x1a1008, 0.7);
@@ -118,7 +118,7 @@ class HandScene extends Phaser.Scene {
   }
 
   createInput(W, H) {
-    const inputY = 575;
+    const inputY = 393;
 
     this.add.text(W / 2, inputY - 18, '役名を入力', {
       fontSize: '11px',
@@ -148,7 +148,7 @@ class HandScene extends Phaser.Scene {
 
   createButtons(W, H) {
     // 「役を追加」ボタン
-    const addBtnY = 622;
+    const addBtnY = 443;
     const addBg = this.add.graphics();
     const drawAdd = (color) => {
       addBg.clear();
@@ -169,7 +169,7 @@ class HandScene extends Phaser.Scene {
     this.addBtn.on('pointerdown', () => this.addRole());
 
     // 「採点！」スタンプボタン
-    const scoreBtnY = 672;
+    const scoreBtnY = 495;
     const scoreBg = this.add.graphics();
     const drawScore = (color) => {
       scoreBg.clear();
@@ -190,13 +190,13 @@ class HandScene extends Phaser.Scene {
     this.scoreBtn.on('pointerout', () => drawScore(0xc0302a));
     this.scoreBtn.on('pointerdown', () => this.submitForScoring());
 
-    this.selectionHintText = this.add.text(W / 2, 730, '手帳のシールをタップして選ぼう', {
+    this.selectionHintText = this.add.text(W / 2, 543, '手帳のシールをタップして選ぼう', {
       fontSize: '12px',
       color: '#c8b090',
       fontFamily: 'sans-serif'
     }).setOrigin(0.5);
 
-    this.selectionCountText = this.add.text(W / 2, 755, '', {
+    this.selectionCountText = this.add.text(W / 2, 565, '', {
       fontSize: '12px',
       color: '#a8d5b5',
       fontFamily: 'sans-serif'
@@ -344,7 +344,7 @@ class HandScene extends Phaser.Scene {
 
   showFlash(message, color) {
     const W = this.scale.width;
-    const flash = this.add.text(W / 2, 340, message, {
+    const flash = this.add.text(W / 2, 222, message, {
       fontSize: '15px',
       color: '#ffffff',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
@@ -355,7 +355,7 @@ class HandScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: flash,
-      y: 310,
+      y: 192,
       alpha: 0,
       duration: 1200,
       ease: 'Power2',
