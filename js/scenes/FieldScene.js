@@ -55,7 +55,7 @@ class FieldScene extends Phaser.Scene {
     const nbX = 14;
     const nbY = 58;
     const nbW = W - 28;
-    const nbH = 400;
+    const nbH = 340;
 
     const shadow = this.add.graphics();
     shadow.fillStyle(0x000000, 0.25);
@@ -103,9 +103,9 @@ class FieldScene extends Phaser.Scene {
 
   createHandbookArea(W, H) {
     const nbX = 14;
-    const nbY = 476;
+    const nbY = 414;
     const nbW = W - 28;
-    const nbH = 240;
+    const nbH = 185;
 
     const shadow = this.add.graphics();
     shadow.fillStyle(0x000000, 0.2);
@@ -199,7 +199,7 @@ class FieldScene extends Phaser.Scene {
     // 取った絵文字用のスロット表示
     this.takenRow = [];
     const takenStartX = (W - (this.maxTurns * (stickerSize + 6) - 6)) / 2 + stickerSize / 2;
-    const takenY = hb.y + 120;
+    const takenY = hb.y + 110;
     for (let i = 0; i < this.maxTurns; i++) {
       const x = takenStartX + i * (stickerSize + 6);
       const slot = this.add.graphics();
@@ -296,7 +296,7 @@ class FieldScene extends Phaser.Scene {
   showRoleMakeButton() {
     const W = this.scale.width;
     const H = this.scale.height;
-    const btnY = H - 170;
+    const btnY = 572;
     const btnW = 200;
     const btnH = 42;
 
