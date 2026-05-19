@@ -10,20 +10,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 2222
-          protocol: sftp
-          local-dir: ./
-          server-dir: /public_html/emojibe/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            emojibe_field.html
-            emojibe_handoff.md
-            絵文字リスト.txt
+      - name: Deploy via SFTP (lftp)
+        env:
+          SFTP_HOST: ${{ secrets.FTP_SERVER }}
+          SFTP_USER: ${{ secrets.FTP_USERNAME }}
+          SFTP_PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          sudo apt-get install -y lftp
+          printf 'machine %s login %s password %s\n' "$SFTP_HOST" "$SFTP_USER" "$SFTP_PASS" > ~/.netrc
+          chmod 600 ~/.netrc
+          lftp sftp://$SFTP_HOST:2222 -e "
+            set sftp:auto-confirm yes;
+            set net:max-retries 3;
+            mirror --reverse --delete \
+              --exclude-glob .git \
+              --exclude-glob .github \
+              --exclude-glob emojibe_field.html \
+              --exclude-glob emojibe_handoff.md \
+              . /public_html/emojibe/;
+            bye;
+          "
