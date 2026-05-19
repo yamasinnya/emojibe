@@ -22,6 +22,7 @@ jobs:
           lftp sftp://$SFTP_USER@$SFTP_HOST:2222 -e "
             set sftp:auto-confirm yes;
             set net:max-retries 3;
+            mkdir -p /public_html/emojibe;
             mirror --reverse --delete \
               --exclude-glob .git \
               --exclude-glob .github \
