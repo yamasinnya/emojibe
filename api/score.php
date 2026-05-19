@@ -16,46 +16,44 @@ if (!$data || empty($data['emojis']) || empty($data['role_name'])) {
     exit;
 }
 
-$emojiList = implode('', $data['emojis']);
 $emojiWithNames = '';
 if (!empty($data['emoji_names'])) {
     $pairs = array_map(null, $data['emojis'], $data['emoji_names']);
     $emojiWithNames = implode('、', array_map(fn($p) => "{$p[0]}({$p[1]})", $pairs));
 } else {
-    $emojiWithNames = $emojiList;
+    $emojiWithNames = implode('', $data['emojis']);
 }
 $roleName = mb_substr($data['role_name'], 0, 30);
 
 $prompt = <<<PROMPT
-以下の絵文字の組み合わせと役名を採点してください。
+以下の絵文字の組み合わせと、プレイヤーがつけた「役名」の噛み合い度を採点してください。
 
 絵文字：{$emojiWithNames}
 役名：{$roleName}
 
-採点基準：
-- カテゴリ共通（動物・食べ物など）：1〜2点
-- 情景・状況・雰囲気：3〜4点
-- 固有名詞・作品名・人名：5〜7点
-- 完璧で誰もが納得する組み合わせ：8〜10点
-- 関係ない絵文字が混じっている：-1〜-3点
+採点基準（絵文字単体でなく、役名との組み合わせで判断してください）：
+- カテゴリが合ってるだけ（動物3匹など）：1〜2点
+- 具体的な状況・情景が浮かぶ：3〜4点
+- 固有名詞・作品名・人名で納得感あり：5〜7点
+- 誰もが「確かに！」と膝を打つ：8〜10点
+- 役名と関係ない絵文字が混じってる：-1〜-3点
 
-以下のJSON形式のみで返してください（他のテキストは不要）：
+AIが知らないマイナーネタは低得点で構いません（御愛嬌）。
+
+以下のJSON形式のみで返してください（他のテキスト不要）：
 {"score": 数字, "comment": "一言コメント（日本語、20文字以内）"}
 PROMPT;
 
 $apiKey = getenv('ANTHROPIC_API_KEY');
 if (!$apiKey) {
-    // フォールバック：APIキーがない環境用
-    echo json_encode(['content' => [['text' => '{"score": 3, "comment": "なかなかいい組み合わせ！"}']]]);
+    echo json_encode(['score' => 3, 'comment' => 'なかなかいい組み合わせ！']);
     exit;
 }
 
 $payload = json_encode([
     'model' => 'claude-haiku-4-5-20251001',
-    'max_tokens' => 150,
-    'messages' => [
-        ['role' => 'user', 'content' => $prompt]
-    ]
+    'max_tokens' => 100,
+    'messages' => [['role' => 'user', 'content' => $prompt]]
 ]);
 
 $context = stream_context_create([
@@ -73,11 +71,20 @@ $context = stream_context_create([
 ]);
 
 $response = file_get_contents('https://api.anthropic.com/v1/messages', false, $context);
-
 if ($response === false) {
-    http_response_code(500);
-    echo json_encode(['error' => 'API request failed']);
+    echo json_encode(['score' => 3, 'comment' => '採点できませんでした']);
     exit;
 }
 
-echo $response;
+$apiData = json_decode($response, true);
+$text = $apiData['content'][0]['text'] ?? '';
+$match = [];
+if (preg_match('/\{[\s\S]*?\}/', $text, $match)) {
+    $result = json_decode($match[0], true);
+    if (isset($result['score'])) {
+        echo json_encode($result);
+        exit;
+    }
+}
+
+echo json_encode(['score' => 3, 'comment' => '面白い組み合わせ！']);

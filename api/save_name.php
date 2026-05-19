@@ -11,13 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data || empty($data['session_id']) || empty($data['roles'])) {
+if (!$data || empty($data['session_id']) || empty($data['player_name'])) {
     echo json_encode(['success' => false, 'error' => 'Invalid input']);
     exit;
 }
 
 if (!file_exists(__DIR__ . '/db_config.php')) {
-    echo json_encode(['success' => true, 'saved' => false, 'note' => 'no db config']);
+    echo json_encode(['success' => true, 'saved' => false]);
     exit;
 }
 require_once __DIR__ . '/db_config.php';
@@ -29,24 +29,16 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 } catch (PDOException $e) {
-    echo json_encode(['success' => true, 'saved' => false, 'note' => 'db error']);
+    echo json_encode(['success' => false, 'error' => 'db error']);
     exit;
 }
 
-$sessionId = mb_substr($data['session_id'], 0, 36);
 $stmt = $pdo->prepare(
-    'INSERT INTO game_logs (session_id, role_name, emojis, ai_score, ai_comment)
-     VALUES (?, ?, ?, ?, ?)'
+    'UPDATE game_logs SET player_name=? WHERE session_id=? AND ai_score >= 8'
 );
+$stmt->execute([
+    mb_substr($data['player_name'], 0, 50),
+    mb_substr($data['session_id'], 0, 36),
+]);
 
-foreach ($data['roles'] as $role) {
-    $stmt->execute([
-        $sessionId,
-        mb_substr($role['role_name'] ?? '', 0, 100),
-        mb_substr($role['emojis'] ?? '', 0, 200),
-        (int)($role['ai_score'] ?? 0),
-        mb_substr($role['ai_comment'] ?? '', 0, 200),
-    ]);
-}
-
-echo json_encode(['success' => true, 'saved' => true]);
+echo json_encode(['success' => true, 'updated' => $stmt->rowCount()]);

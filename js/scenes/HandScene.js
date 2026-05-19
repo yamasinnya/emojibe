@@ -382,9 +382,15 @@ class HandScene extends Phaser.Scene {
       this.inputEl.destroy();
     }
 
+    const sessionId = (crypto.randomUUID ? crypto.randomUUID() :
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      }));
+
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.time.delayedCall(300, () => {
-      this.scene.start('ResultScene', { roles: this.roles });
+      this.scene.start('ResultScene', { roles: this.roles, sessionId });
     });
   }
 
