@@ -349,7 +349,7 @@ const EMOJIS = [
 ];
 
 function emojiKey(emoji) {
-  return 'emoji_' + twemoji.convert.toCodePoint(emoji);
+  return 'emoji_' + emoji;
 }
 
 function getRandomEmojis(count, exclude = []) {
