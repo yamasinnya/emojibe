@@ -37,7 +37,7 @@ class BootScene extends Phaser.Scene {
       console.warn('emoji load failed:', file.key);
     });
 
-    const BASE = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/';
+    const BASE = 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/72x72/';
     EMOJIS.forEach(e => {
       const cp = twemoji.convert.toCodePoint(e.emoji);
       this.load.image('emoji_' + cp, BASE + cp + '.png');
