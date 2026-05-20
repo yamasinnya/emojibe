@@ -47,19 +47,21 @@ class JoinScene extends Phaser.Scene {
         if (data.error) throw new Error(data.error);
 
         sessionStorage.setItem(key, JSON.stringify({
-          sessionId:   data.session_id,
-          role:        'guest',
-          initialHand: data.initial_hand,
-          hiddenIdx:   data.hidden_idx,
-          fieldEmojis: data.field_emojis,
+          sessionId:       data.session_id,
+          role:            'guest',
+          initialHand:     data.initial_hand,
+          hiddenIdx:       data.hidden_idx,
+          fieldEmojis:     data.field_emojis,
+          oppInitialHand:  data.opp_initial_hand || [],
         }));
 
         this.startGame(roomId, {
-          sessionId:   data.session_id,
-          role:        'guest',
-          initialHand: data.initial_hand,
-          hiddenIdx:   data.hidden_idx,
-          fieldEmojis: data.field_emojis,
+          sessionId:       data.session_id,
+          role:            'guest',
+          initialHand:     data.initial_hand,
+          hiddenIdx:       data.hidden_idx,
+          fieldEmojis:     data.field_emojis,
+          oppInitialHand:  data.opp_initial_hand || [],
         }, data);
       }
     } catch(e) {
@@ -70,7 +72,6 @@ class JoinScene extends Phaser.Scene {
 
   startGame(roomId, saved, state) {
     if (state.status === 'done' || state.status === 'scoring') {
-      // 途中復帰（採点フェーズ）
       this.scene.start('ResultSceneMulti', {
         roomId,
         sessionId: saved.sessionId,
@@ -80,20 +81,27 @@ class JoinScene extends Phaser.Scene {
       return;
     }
 
-    const fieldEmojis = state.field_emojis || saved.fieldEmojis || [];
+    // 空配列は falsy にならないので length で判定してフォールバック
+    const sf = state.field_emojis;
+    const fieldEmojis = (Array.isArray(sf) && sf.length > 0)
+      ? sf
+      : (Array.isArray(saved.fieldEmojis) && saved.fieldEmojis.length > 0 ? saved.fieldEmojis : []);
+
+    const oppInitialHand = state.opp_initial_hand || saved.oppInitialHand || [];
 
     this.scene.start('FieldSceneMulti', {
       roomId,
-      sessionId:     saved.sessionId,
-      role:          saved.role,
-      initialHand:   saved.initialHand,
-      hiddenIdx:     saved.hiddenIdx,
+      sessionId:      saved.sessionId,
+      role:           saved.role,
+      initialHand:    saved.initialHand,
+      hiddenIdx:      saved.hiddenIdx,
       fieldEmojis,
-      currentTurn:   state.current_turn,
-      turnDeadline:  state.turn_deadline,
-      turnNumber:    state.turn_number || 1,
-      myPicked:      state.my_picked   || [],
-      oppPicked:     state.opp_picked  || [],
+      oppInitialHand,
+      currentTurn:    state.current_turn,
+      turnDeadline:   state.turn_deadline,
+      turnNumber:     state.turn_number || 1,
+      myPicked:       state.my_picked   || [],
+      oppPicked:      state.opp_picked  || [],
     });
   }
 }

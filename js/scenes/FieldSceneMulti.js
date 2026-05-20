@@ -2,20 +2,22 @@ class FieldSceneMulti extends Phaser.Scene {
   constructor() { super({ key: 'FieldSceneMulti' }); }
 
   init(data) {
-    this.roomId       = data.roomId;
-    this.sessionId    = data.sessionId;
-    this.myRole       = data.role;          // 'host' | 'guest'
-    this.initialHand  = data.initialHand || [];
-    this.hiddenIdx    = data.hiddenIdx ?? -1;
-    this.fieldEmojis  = data.fieldEmojis || [];
-    this.currentTurn  = data.currentTurn;
-    this.turnDeadline = data.turnDeadline ? new Date(data.turnDeadline) : null;
-    this.turnNumber   = data.turnNumber || 1;
-    this.myPicked     = data.myPicked    || [];
-    this.oppPicked    = data.oppPicked   || [];
+    this.roomId          = data.roomId;
+    this.sessionId       = data.sessionId;
+    this.myRole          = data.role;
+    this.initialHand     = data.initialHand    || [];
+    this.hiddenIdx       = data.hiddenIdx ?? -1;
+    this.fieldEmojis     = data.fieldEmojis    || [];
+    this.oppInitialHand  = data.oppInitialHand || [];
+    this.currentTurn     = data.currentTurn;
+    this.turnDeadline    = data.turnDeadline ? new Date(data.turnDeadline) : null;
+    this.turnNumber      = data.turnNumber || 1;
+    this.myPicked        = data.myPicked    || [];
+    this.oppPicked       = data.oppPicked   || [];
 
     this.fieldStickers    = [];
     this.myHandStickers   = [];
+    this.oppHandStickers  = [];
     this.myTakenSlots     = [];
     this.oppTakenSlots    = [];
     this.picking          = false;
@@ -37,6 +39,7 @@ class FieldSceneMulti extends Phaser.Scene {
 
     this._placeFieldStickers(W);
     this._placePlayerHand(W);
+    this._placeOppInitialHand();
     this._updateOppDisplay();
 
     this._startPolling();
@@ -90,24 +93,31 @@ class FieldSceneMulti extends Phaser.Scene {
     bg.fillRoundedRect(x, y, w, h, 8);
     bg.lineStyle(1, 0xc03020, 0.35);
     bg.strokeRoundedRect(x, y, w, h, 8);
-    this.add.text(W / 2, y + 14, '相 手 の 手 帳', {
+    this.add.text(W / 2, y + 10, '相 手 の 手 帳', {
       fontSize: '10px', color: '#e8a090', fontFamily: 'sans-serif', letterSpacing: 4
     }).setOrigin(0.5);
 
-    // 相手の取得スロット（6個、小さい）
-    const slotSize = 22, gap = 4;
+    // 相手の初期手札行（7枚、サイズ16px）の配置位置を記憶
+    const hSize = 16, hGap = 3;
+    this.oppHandRowY = y + 30;
+    this.oppHandRowX = (W - (7 * hSize + 6 * hGap)) / 2 + hSize / 2;
+    this.oppHandStickSize = hSize;
+    this.oppHandStickGap  = hGap;
+
+    // 相手の取得スロット（6個、18px）
+    const slotSize = 18, gap = 3;
     const totalW = 6 * slotSize + 5 * gap;
     const sx = (W - totalW) / 2;
+    const slotY = y + 80;
     for (let i = 0; i < 6; i++) {
       const slotX = sx + i * (slotSize + gap) + slotSize / 2;
-      const slotY = y + 72;
       const g = this.add.graphics();
       g.lineStyle(1, 0xc03020, 0.3);
       g.strokeRoundedRect(slotX - slotSize / 2, slotY - slotSize / 2, slotSize, slotSize, 4);
       this.oppTakenSlots.push({ x: slotX, y: slotY, size: slotSize, gfx: g, img: null });
     }
-    this.oppStatusText = this.add.text(W / 2, y + 106, '', {
-      fontSize: '12px', color: '#e8a090', fontFamily: 'sans-serif'
+    this.oppStatusText = this.add.text(W / 2, y + 110, '', {
+      fontSize: '10px', color: '#e8a090', fontFamily: 'sans-serif'
     }).setOrigin(0.5);
   }
 
@@ -211,6 +221,16 @@ class FieldSceneMulti extends Phaser.Scene {
     });
   }
 
+  _placeOppInitialHand() {
+    const size = this.oppHandStickSize;
+    const gap  = this.oppHandStickGap;
+    this.oppInitialHand.forEach((emojiData, i) => {
+      const x = this.oppHandRowX + i * (size + gap);
+      const st = this._makeSticker(x, this.oppHandRowY, emojiData, Phaser.Math.Between(-5, 5), 0xfff0ee, size);
+      this.oppHandStickers.push(st);
+    });
+  }
+
   _makeSticker(x, y, emojiData, angle, bgColor, size) {
     const container = this.add.container(x, y);
     const half = size / 2;
@@ -219,14 +239,22 @@ class FieldSceneMulti extends Phaser.Scene {
     bg.fillRoundedRect(-half, -half, size, size, 5);
     bg.lineStyle(1, 0xd0c8b0, 0.65);
     bg.strokeRoundedRect(-half, -half, size, size, 5);
-    const img = this.add.image(0, 0, emojiKey(emojiData.emoji)).setDisplaySize(
-      Math.floor(size * 0.65), Math.floor(size * 0.65)
-    );
-    container.add([bg, img]);
+
+    let inner;
+    if (emojiData.hidden) {
+      inner = this.add.text(0, 1, '?', {
+        fontSize: `${Math.floor(size * 0.55)}px`,
+        color: '#8a7560', fontFamily: 'sans-serif', fontStyle: 'bold'
+      }).setOrigin(0.5);
+    } else {
+      inner = this.add.image(0, 0, emojiKey(emojiData.emoji))
+        .setDisplaySize(Math.floor(size * 0.65), Math.floor(size * 0.65));
+    }
+    container.add([bg, inner]);
     container.setAngle(angle);
     container.setScale(0);
     this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 250, delay: Math.random() * 300, ease: 'Back.out' });
-    return { container, bg, img, emojiData, taken: false };
+    return { container, bg, img: inner, emojiData, taken: false };
   }
 
   _syncFieldState() {
@@ -278,7 +306,7 @@ class FieldSceneMulti extends Phaser.Scene {
       if (i >= 6) return;
       const slot = this.oppTakenSlots[i];
       if (slot.img) return;
-      const img = this.add.image(slot.x, slot.y, emojiKey(emojiData.emoji)).setDisplaySize(16, 16);
+      const img = this.add.image(slot.x, slot.y, emojiKey(emojiData.emoji)).setDisplaySize(13, 13);
       slot.img = img;
     });
     const oppTotal = this.oppPicked.length;

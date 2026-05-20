@@ -55,16 +55,27 @@ try {
     $turnNum->execute([$roomId]);
     $turnNumber = (int)$turnNum->fetchColumn() + 1;
 
+    // 相手の初期手札（非公開カードをマスク）
+    $oppHandRaw      = $opp ? ($opp['initial_hand'] ?? '[]') : '[]';
+    $oppFullHand     = json_decode($oppHandRaw, true) ?? [];
+    $oppHiddenEmoji  = $opp ? ($opp['hidden_emoji'] ?? '') : '';
+    $oppHandMasked   = array_map(function($card) use ($oppHiddenEmoji) {
+        return ($card['emoji'] === $oppHiddenEmoji)
+            ? ['emoji' => '?', 'name' => '?', 'hidden' => true]
+            : $card;
+    }, $oppFullHand);
+
     $response = [
-        'status'       => $room['status'],
-        'my_role'      => $myRole,
-        'current_turn' => $room['current_turn'],
-        'turn_deadline'=> $room['turn_deadline'] ? $room['turn_deadline'] . 'Z' : null,
-        'hand_deadline'=> $room['hand_deadline']  ? $room['hand_deadline']  . 'Z' : null,
-        'turn_number'  => $turnNumber,
-        'field_emojis' => $enrichedField,
-        'opp_picked'   => $oppPicked,
-        'my_picked'    => $myPicked,
+        'status'           => $room['status'],
+        'my_role'          => $myRole,
+        'current_turn'     => $room['current_turn'],
+        'turn_deadline'    => $room['turn_deadline'] ? $room['turn_deadline'] . 'Z' : null,
+        'hand_deadline'    => $room['hand_deadline']  ? $room['hand_deadline']  . 'Z' : null,
+        'turn_number'      => $turnNumber,
+        'field_emojis'     => $enrichedField,
+        'opp_picked'       => $oppPicked,
+        'my_picked'        => $myPicked,
+        'opp_initial_hand' => $oppHandMasked,
     ];
 
     // 採点済み結果（status=done のとき）

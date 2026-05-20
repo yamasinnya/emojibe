@@ -32,11 +32,19 @@ try {
     }
 
     // ホストの手札を取得（絵文字重複回避のため）
-    $hostStmt = $pdo->prepare("SELECT initial_hand FROM room_players WHERE room_id = ? AND role = 'host'");
+    $hostStmt = $pdo->prepare("SELECT initial_hand, hidden_emoji FROM room_players WHERE room_id = ? AND role = 'host'");
     $hostStmt->execute([$roomId]);
-    $hostHandRaw = $hostStmt->fetchColumn();
+    $hostRow     = $hostStmt->fetch(PDO::FETCH_ASSOC);
+    $hostHandRaw = $hostRow['initial_hand'] ?? false;
+    $hostHiddenEmoji = $hostRow['hidden_emoji'] ?? '';
     $hostHand    = ($hostHandRaw !== false && $hostHandRaw !== null)
                    ? (json_decode($hostHandRaw, true) ?? []) : [];
+    // ゲストに見せる際、ホストの非公開カードをマスク
+    $hostHandMasked = array_map(function($card) use ($hostHiddenEmoji) {
+        return ($card['emoji'] === $hostHiddenEmoji)
+            ? ['emoji' => '?', 'name' => '?', 'hidden' => true]
+            : $card;
+    }, $hostHand);
 
     $fieldRaw    = $room['field_emojis'] ?? '[]';
     $fieldEmojis = json_decode($fieldRaw, true) ?? [];
@@ -68,14 +76,15 @@ try {
     $pdo->commit();
 
     echo json_encode([
-        'session_id'    => $guestSess,
-        'role'          => 'guest',
-        'initial_hand'  => $guestHand,
-        'hidden_idx'    => $hiddenIdx,
-        'field_emojis'  => $fieldEmojis,
-        'current_turn'  => $firstTurn,
-        'turn_deadline' => $deadline . 'Z',
-        'turn_number'   => 1,
+        'session_id'       => $guestSess,
+        'role'             => 'guest',
+        'initial_hand'     => $guestHand,
+        'hidden_idx'       => $hiddenIdx,
+        'field_emojis'     => $fieldEmojis,
+        'opp_initial_hand' => $hostHandMasked,
+        'current_turn'     => $firstTurn,
+        'turn_deadline'    => $deadline . 'Z',
+        'turn_number'      => 1,
     ]);
 } catch (\Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
