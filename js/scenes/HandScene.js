@@ -209,7 +209,7 @@ class HandScene extends Phaser.Scene {
 
   placeHandStickers(W, H) {
     const count = this.hand.length;
-    const stickerSize = 34;
+    const stickerSize = 40;
     const gap = 4;
     const cols = 7;
     const rows = Math.ceil(count / cols);
@@ -293,6 +293,11 @@ class HandScene extends Phaser.Scene {
   }
 
   addRole() {
+    if (this.roles.length >= 3) {
+      this.showFlash('役は3つまでです！', 0xc08030);
+      return;
+    }
+
     if (this.selectedIndices.size === 0) {
       this.showFlash('シールを選んでね！', 0xc08030);
       return;
@@ -344,7 +349,21 @@ class HandScene extends Phaser.Scene {
         }
       );
       this.roleListItems.push(text);
+
+      const del = this.add.text(
+        this.rolePanelBounds.x + this.rolePanelBounds.w - 14,
+        this.roleListY + i * 28,
+        '✕',
+        { fontSize: '13px', color: '#ff8888', fontFamily: 'sans-serif' }
+      ).setOrigin(1, 0.5).setInteractive({ useHandCursor: true }).setDepth(5);
+      del.on('pointerdown', () => this.deleteRole(i));
+      this.roleListItems.push(del);
     });
+  }
+
+  deleteRole(i) {
+    this.roles.splice(i, 1);
+    this.updateRoleList();
   }
 
   showFlash(message, color) {

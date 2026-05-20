@@ -158,7 +158,7 @@ class FieldScene extends Phaser.Scene {
     // 場のシールを配置（5列×4行）
     const cols = 5;
     const rows = 4;
-    const stickerSize = 40;
+    const stickerSize = 44;
     const nb = this.fieldNotebookBounds;
     const innerW = nb.w - 50;
     const innerH = nb.h - 50;
@@ -184,7 +184,7 @@ class FieldScene extends Phaser.Scene {
   placeHandStickers(handEmojis, W, H) {
     const hb = this.handbookBounds;
     const count = handEmojis.length;
-    const stickerSize = 36;
+    const stickerSize = 40;
     const totalW = count * stickerSize + (count - 1) * 6;
     const startX = (W - totalW) / 2 + stickerSize / 2;
     const y = hb.y + 65;
@@ -227,35 +227,38 @@ class FieldScene extends Phaser.Scene {
   enableFieldStickerInteraction() {
     this.fieldStickers.forEach(sticker => {
       if (sticker.taken) return;
+      this.setupFieldStickerInteraction(sticker);
+    });
+  }
 
-      sticker.container.setInteractive(
-        new Phaser.Geom.Rectangle(-22, -22, 44, 44),
-        Phaser.Geom.Rectangle.Contains
-      );
+  setupFieldStickerInteraction(sticker) {
+    sticker.container.setInteractive(
+      new Phaser.Geom.Rectangle(-24, -24, 48, 48),
+      Phaser.Geom.Rectangle.Contains
+    );
 
-      sticker.container.on('pointerover', () => {
-        if (!this.gameStarted || sticker.taken) return;
+    sticker.container.on('pointerover', () => {
+      if (!this.gameStarted || sticker.taken) return;
+      this.tweens.add({
+        targets: sticker.container,
+        scaleX: 1.25, scaleY: 1.25,
+        duration: 120, ease: 'Back.out'
+      });
+    });
+
+    sticker.container.on('pointerout', () => {
+      if (!sticker.taken) {
         this.tweens.add({
           targets: sticker.container,
-          scaleX: 1.25, scaleY: 1.25,
-          duration: 120, ease: 'Back.out'
+          scaleX: 1, scaleY: 1,
+          duration: 120
         });
-      });
+      }
+    });
 
-      sticker.container.on('pointerout', () => {
-        if (!sticker.taken) {
-          this.tweens.add({
-            targets: sticker.container,
-            scaleX: 1, scaleY: 1,
-            duration: 120
-          });
-        }
-      });
-
-      sticker.container.on('pointerdown', () => {
-        if (!this.gameStarted || sticker.taken || this.turn > this.maxTurns) return;
-        this.takeSticker(sticker);
-      });
+    sticker.container.on('pointerdown', () => {
+      if (!this.gameStarted || sticker.taken || this.turn > this.maxTurns) return;
+      this.takeSticker(sticker);
     });
   }
 
@@ -263,7 +266,9 @@ class FieldScene extends Phaser.Scene {
     sticker.taken = true;
     sticker.container.disableInteractive();
 
-    const takenSlot = this.takenRow[this.turn - 1];
+    const slotIndex = this.turn - 1;
+    const takenSlot = this.takenRow[slotIndex];
+    takenSlot.sticker = sticker;
     const targetX = takenSlot.x;
     const targetY = takenSlot.y;
 
@@ -278,6 +283,11 @@ class FieldScene extends Phaser.Scene {
       ease: 'Back.inOut',
       onComplete: () => {
         this.takenEmojis.push(sticker.emojiData);
+        sticker.container.setInteractive(
+          new Phaser.Geom.Rectangle(-22, -22, 44, 44),
+          Phaser.Geom.Rectangle.Contains
+        );
+        sticker.container.on('pointerdown', () => this.returnSticker(sticker, slotIndex));
         this.turn++;
         if (this.turn > this.maxTurns) {
           this.onAllTurnsDone();
@@ -286,6 +296,39 @@ class FieldScene extends Phaser.Scene {
         }
       }
     });
+  }
+
+  returnSticker(sticker, slotIndex) {
+    sticker.container.off('pointerdown');
+    sticker.container.disableInteractive();
+
+    const idx = this.takenEmojis.indexOf(sticker.emojiData);
+    if (idx !== -1) this.takenEmojis.splice(idx, 1);
+
+    this.takenRow[slotIndex].sticker = null;
+    this.turn--;
+    sticker.taken = false;
+
+    if (this.roleMakeBtn) {
+      this.roleMakeBtn.destroy();
+      this.roleMakeBtn = null;
+      this.roleMakeBg.destroy();
+      this.roleMakeBg = null;
+    }
+
+    this.tweens.add({
+      targets: sticker.container,
+      x: sticker.originalX,
+      y: sticker.originalY,
+      angle: sticker.originalAngle,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 350,
+      ease: 'Back.out',
+      onComplete: () => this.setupFieldStickerInteraction(sticker)
+    });
+
+    this.updateTurnText();
   }
 
   onAllTurnsDone() {
@@ -300,24 +343,24 @@ class FieldScene extends Phaser.Scene {
     const btnW = 200;
     const btnH = 42;
 
-    const bg = this.add.graphics();
+    this.roleMakeBg = this.add.graphics();
     const draw = (color) => {
-      bg.clear();
-      bg.fillStyle(color, 1);
-      bg.fillRoundedRect(W / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 21);
+      this.roleMakeBg.clear();
+      this.roleMakeBg.fillStyle(color, 1);
+      this.roleMakeBg.fillRoundedRect(W / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 21);
     };
     draw(0x4a7c59);
 
-    const btn = this.add.text(W / 2, btnY, '役を作る！', {
+    this.roleMakeBtn = this.add.text(W / 2, btnY, '役を作る！', {
       fontSize: '18px',
       color: '#f0fff0',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
       fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    btn.on('pointerover', () => draw(0x5a9c6a));
-    btn.on('pointerout', () => draw(0x4a7c59));
-    btn.on('pointerdown', () => {
+    this.roleMakeBtn.on('pointerover', () => draw(0x5a9c6a));
+    this.roleMakeBtn.on('pointerout', () => draw(0x4a7c59));
+    this.roleMakeBtn.on('pointerdown', () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(300, () => {
         const fullHand = [...this.playerHand, ...this.takenEmojis];
@@ -351,7 +394,7 @@ class FieldScene extends Phaser.Scene {
       ease: 'Back.out'
     });
 
-    return { container, emojiData, taken: false };
+    return { container, emojiData, taken: false, originalX: x, originalY: y, originalAngle: angle };
   }
 
 }

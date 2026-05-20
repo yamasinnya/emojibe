@@ -17,7 +17,7 @@ class ResultScene extends Phaser.Scene {
     this.createResultArea(W, H);
     this.createButtons(W, H);
 
-    this.waitingText = this.add.text(W / 2, H - 38, '採点中... しばらくお待ちください', {
+    this.waitingText = this.add.text(W / 2, 582, '採点中... しばらくお待ちください', {
       fontSize: '12px',
       color: '#c8b090',
       fontFamily: 'sans-serif'
@@ -57,7 +57,7 @@ class ResultScene extends Phaser.Scene {
     const nbX = 12;
     const nbY = 58;
     const nbW = W - 24;
-    const nbH = 600;
+    const nbH = 500;
 
     const shadow = this.add.graphics();
     shadow.fillStyle(0x000000, 0.2);
@@ -83,7 +83,7 @@ class ResultScene extends Phaser.Scene {
   }
 
   createButtons(W, H) {
-    const againBtn = this.add.text(W / 2 - 70, H - 42, 'もう一度', {
+    const againBtn = this.add.text(W / 2 - 70, 618, 'もう一度', {
       fontSize: '14px',
       color: '#f5e6c8',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
@@ -96,7 +96,7 @@ class ResultScene extends Phaser.Scene {
       this.time.delayedCall(300, () => this.scene.start('FieldScene'));
     });
 
-    const homeBtn = this.add.text(W / 2 + 70, H - 42, 'トップへ', {
+    const homeBtn = this.add.text(W / 2 + 70, 618, 'トップへ', {
       fontSize: '14px',
       color: '#2a1a0a',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
