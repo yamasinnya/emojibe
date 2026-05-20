@@ -38,9 +38,9 @@ try {
     $oppRole = $myRole === 'host' ? 'guest' : 'host';
 
     // フィールド絵文字に「誰が取ったか」を付与
-    $fieldEmojis  = json_decode($room['field_emojis'], true);
-    $myPicked     = json_decode($me['picked_emojis'] ?? '[]', true);
-    $oppPicked    = $opp ? json_decode($opp['picked_emojis'] ?? '[]', true) : [];
+    $fieldEmojis  = json_decode($room['field_emojis'] ?? '[]', true) ?? [];
+    $myPicked     = json_decode($me['picked_emojis'] ?? '[]', true) ?? [];
+    $oppPicked    = $opp ? (json_decode($opp['picked_emojis'] ?? '[]', true) ?? []) : [];
     $myEmojis     = array_column($myPicked, 'emoji');
     $oppEmojis    = array_column($oppPicked, 'emoji');
 
@@ -97,7 +97,7 @@ try {
     }
 
     echo json_encode($response);
-} catch (Exception $e) {
+} catch (\Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'DB error']);
+    echo json_encode(['error' => $e->getMessage()]);
 }

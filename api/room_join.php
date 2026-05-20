@@ -20,21 +20,26 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     $pdo->exec("SET time_zone = '+00:00'");
+    $pdo->beginTransaction();
 
     // 部屋確認
-    $room = $pdo->prepare("SELECT * FROM rooms WHERE id = ? AND status = 'waiting' FOR UPDATE");
-    $room->execute([$roomId]);
-    $room = $room->fetch(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare("SELECT * FROM rooms WHERE id = ? AND status = 'waiting' FOR UPDATE");
+    $stmt->execute([$roomId]);
+    $room = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$room) {
+        $pdo->rollBack();
         echo json_encode(['error' => '部屋が見つかりません（満員か存在しない）']); exit;
     }
 
     // ホストの手札を取得（絵文字重複回避のため）
-    $hostPlayer = $pdo->prepare("SELECT initial_hand FROM room_players WHERE room_id = ? AND role = 'host'");
-    $hostPlayer->execute([$roomId]);
-    $hostHand = json_decode($hostPlayer->fetchColumn(), true) ?? [];
+    $hostStmt = $pdo->prepare("SELECT initial_hand FROM room_players WHERE room_id = ? AND role = 'host'");
+    $hostStmt->execute([$roomId]);
+    $hostHandRaw = $hostStmt->fetchColumn();
+    $hostHand    = ($hostHandRaw !== false && $hostHandRaw !== null)
+                   ? (json_decode($hostHandRaw, true) ?? []) : [];
 
-    $fieldEmojis = json_decode($room['field_emojis'], true);
+    $fieldRaw    = $room['field_emojis'] ?? '[]';
+    $fieldEmojis = json_decode($fieldRaw, true) ?? [];
     $exclude     = array_column($fieldEmojis, 'emoji');
     foreach ($hostHand as $h) $exclude[] = $h['emoji'];
 
@@ -44,8 +49,8 @@ try {
     $guestSess = generateUUID();
 
     // 先攻・後攻ランダム決定
-    $firstTurn   = rand(0, 1) === 0 ? 'host' : 'guest';
-    $deadline    = date('Y-m-d H:i:s', time() + 60); // 初回1分
+    $firstTurn = rand(0, 1) === 0 ? 'host' : 'guest';
+    $deadline  = date('Y-m-d H:i:s', time() + 60); // 初回1分
 
     $pdo->prepare(
         "INSERT INTO room_players (room_id, session_id, role, initial_hand, hidden_emoji)
@@ -60,17 +65,20 @@ try {
         "UPDATE rooms SET guest_session=?, status='draft', current_turn=?, turn_deadline=? WHERE id=?"
     )->execute([$guestSess, $firstTurn, $deadline, $roomId]);
 
+    $pdo->commit();
+
     echo json_encode([
-        'session_id'   => $guestSess,
-        'role'         => 'guest',
-        'initial_hand' => $guestHand,
-        'hidden_idx'   => $hiddenIdx,
-        'field_emojis' => $fieldEmojis,
-        'current_turn' => $firstTurn,
+        'session_id'    => $guestSess,
+        'role'          => 'guest',
+        'initial_hand'  => $guestHand,
+        'hidden_idx'    => $hiddenIdx,
+        'field_emojis'  => $fieldEmojis,
+        'current_turn'  => $firstTurn,
         'turn_deadline' => $deadline . 'Z',
-        'turn_number'  => 1,
+        'turn_number'   => 1,
     ]);
-} catch (Exception $e) {
+} catch (\Throwable $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     http_response_code(500);
-    echo json_encode(['error' => 'DB error']);
+    echo json_encode(['error' => $e->getMessage()]);
 }

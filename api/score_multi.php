@@ -116,7 +116,7 @@ try {
         'my_results'  => $myResults,
         'opponent_done' => $bothReady,
     ]);
-} catch (Exception $e) {
+} catch (\Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'DB error']);
+    echo json_encode(['error' => $e->getMessage()]);
 }

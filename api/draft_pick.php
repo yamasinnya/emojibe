@@ -66,8 +66,7 @@ try {
 
             if (!empty($available)) {
                 $autoEmoji   = $available[array_rand($available)];
-                $turnCount   = (int)$pdo->prepare("SELECT COUNT(*) FROM draft_logs WHERE room_id=?")->execute([$roomId]);
-                $turnCountQ  = $pdo->prepare("SELECT COUNT(*) FROM draft_logs WHERE room_id=?");
+                $turnCountQ = $pdo->prepare("SELECT COUNT(*) FROM draft_logs WHERE room_id=?");
                 $turnCountQ->execute([$roomId]);
                 $turnCount = (int)$turnCountQ->fetchColumn();
 
@@ -153,8 +152,8 @@ try {
         'turn_number'  => $turnNum + 1,
         'turn_deadline'=> $deadline . 'Z',
     ]);
-} catch (Exception $e) {
+} catch (\Throwable $e) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     http_response_code(500);
-    echo json_encode(['error' => 'DB error']);
+    echo json_encode(['error' => $e->getMessage()]);
 }
