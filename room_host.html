@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>えもじべ — 対人戦 部屋を作る</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(160deg, #3d2b1a 0%, #2a1a0a 100%);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: 'Hiragino Maru Gothic Pro', 'Yu Gothic', sans-serif;
+      color: #f5e6c8;
+    }
+    .card {
+      background: #f8f4e8;
+      border-radius: 12px;
+      padding: 32px 28px;
+      width: 340px;
+      max-width: 92vw;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+      color: #4a3520;
+      text-align: center;
+    }
+    h1 { font-size: 22px; margin-bottom: 6px; }
+    .sub { font-size: 13px; color: #8a7560; margin-bottom: 24px; }
+    .btn {
+      display: inline-block;
+      background: #d4a853; color: #2a1a0a;
+      font-size: 17px; font-weight: bold;
+      font-family: inherit;
+      padding: 14px 32px; border-radius: 30px; border: none;
+      cursor: pointer; width: 100%;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn:hover { background: #e8c070; transform: scale(1.03); }
+    .btn:active { transform: scale(0.97); }
+    .btn-back {
+      margin-top: 12px;
+      background: none; border: none;
+      color: #8a7560; font-size: 13px;
+      cursor: pointer; text-decoration: underline;
+    }
+    #waiting { display: none; }
+    .url-box {
+      background: #fff8e8;
+      border: 1px solid #d0c0a0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      word-break: break-all;
+      text-align: left;
+      color: #4a3520;
+      margin: 16px 0;
+    }
+    .copy-btn {
+      background: #4a7c59; color: #fff;
+      border: none; border-radius: 6px;
+      padding: 8px 20px; font-size: 13px;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #5a9c6a; }
+    .pulse { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    .status-text { font-size: 14px; color: #7a5a30; margin-top: 16px; }
+    .dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+    .error-text { color: #c03020; font-size: 13px; margin-top: 12px; }
+    .vs-text { font-size: 32px; font-weight: bold; color: #c03020; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="init-screen">
+      <div style="font-size:36px;margin-bottom:8px;">🎮</div>
+      <h1>対人戦モード</h1>
+      <div class="sub">友達と絵文字で役を作り合おう</div>
+      <button class="btn" onclick="createRoom()">部屋を作る</button>
+      <button class="btn-back" onclick="location.href='index.html'">← トップへ戻る</button>
+      <div id="create-error" class="error-text"></div>
+    </div>
+
+    <div id="waiting">
+      <div class="vs-text">VS</div>
+      <h1>友達を待っています</h1>
+      <div class="sub">このURLを友達に送ろう</div>
+      <div class="url-box" id="room-url-text"></div>
+      <button class="copy-btn" id="copy-btn" onclick="copyUrl()">URLをコピー</button>
+      <div class="status-text pulse">相手の入室を待っています<span class="dots"></span></div>
+      <button class="btn-back" onclick="location.href='index.html'">キャンセル</button>
+    </div>
+  </div>
+
+  <script>
+    let pollTimer = null;
+
+    async function createRoom() {
+      document.getElementById('create-error').textContent = '';
+      try {
+        const res  = await fetch('api/room_create.php', { method: 'POST' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const key = `emojibe_multi_${data.room_id}`;
+        sessionStorage.setItem(key, JSON.stringify({
+          sessionId:   data.session_id,
+          role:        'host',
+          initialHand: data.initial_hand,
+          hiddenIdx:   data.hidden_idx,
+          fieldEmojis: data.field_emojis,
+        }));
+
+        const url = location.href.replace('room_host.html', '') + `game_multi.html?room=${data.room_id}`;
+        document.getElementById('room-url-text').textContent = url;
+        document.getElementById('init-screen').style.display = 'none';
+        document.getElementById('waiting').style.display     = 'block';
+
+        pollTimer = setInterval(() => pollRoom(data.room_id, data.session_id), 3000);
+      } catch(e) {
+        document.getElementById('create-error').textContent = '部屋の作成に失敗しました: ' + e.message;
+      }
+    }
+
+    async function pollRoom(roomId, sessionId) {
+      try {
+        const res   = await fetch(`api/room_state.php?room_id=${roomId}&session_id=${sessionId}`);
+        const state = await res.json();
+        if (state.status === 'draft') {
+          clearInterval(pollTimer);
+          location.href = `game_multi.html?room=${roomId}`;
+        }
+      } catch(e) {}
+    }
+
+    function copyUrl() {
+      const url = document.getElementById('room-url-text').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'コピーした！';
+        setTimeout(() => btn.textContent = 'URLをコピー', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

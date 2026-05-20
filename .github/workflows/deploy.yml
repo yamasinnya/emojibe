@@ -39,6 +39,7 @@ jobs:
               --exclude-glob .github \
               --exclude-glob emojibe_field.html \
               --exclude-glob emojibe_handoff.md \
+              --exclude-glob emojibe2.md \
               . /home/users/0/chips.jp-yama/web/emojibe/;
             bye;
           "

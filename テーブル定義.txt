@@ -1,0 +1,105 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- ホスト: mysql326.phy.lolipop.lan
+-- 生成日時: 2026 年 5 月 20 日 09:56
+-- サーバのバージョン： 8.0.35
+-- PHP のバージョン: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- データベース: `LAA1551526-emojibe`
+--
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `emojis`
+--
+
+CREATE TABLE `emojis` (
+  `id` int NOT NULL,
+  `emoji` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `category` varchar(30) COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- テーブルの構造 `game_logs`
+--
+
+CREATE TABLE `game_logs` (
+  `id` int NOT NULL,
+  `session_id` varchar(36) COLLATE utf8mb4_general_ci NOT NULL,
+  `role_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `emojis` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
+  `ai_score` int NOT NULL,
+  `ai_comment` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
+  `player_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- テーブルのデータのダンプ `game_logs`
+--
+
+INSERT INTO `game_logs` (`id`, `session_id`, `role_name`, `emojis`, `ai_score`, `ai_comment`, `player_name`, `created_at`) VALUES
+(1, 'f8392227-faeb-44ea-9b4c-2d5363523435', '哲学者', '🙏🧛🐶', 3, '祈る姿勢は哲学的思索のイメージとマッチ。吸血鬼と犬は関連性が薄い。', NULL, '2026-05-20 00:09:20'),
+(2, 'e520a8a7-d67a-4d53-88d1-988bf1a1c6ab', 'トランプ大統領', '🇺🇸🤬🃏', 9, 'アメリカ、激怒、トランプで人物が完璧に特定される', 'やまし', '2026-05-20 00:12:54'),
+(3, 'e520a8a7-d67a-4d53-88d1-988bf1a1c6ab', '人生ゲーム', '🎲💣🚗', 8, '人生ゲームの要素が完璧に揃ってる。サイコロで進み、爆弾で人生転換、車で人生の進路選択。', 'やまし', '2026-05-20 00:12:54'),
+(4, 'e520a8a7-d67a-4d53-88d1-988bf1a1c6ab', 'smプレイ', '👮🕯️🤬', 3, '警察官と激怒は合致するが、ろうそくの関連性が不明確', NULL, '2026-05-20 00:12:54'),
+(5, 'e520a8a7-d67a-4d53-88d1-988bf1a1c6ab', '乗り物', '🚗🚢🚁', 2, 'カテゴリが合ってるだけ。もっと工夫があれば面白い。', NULL, '2026-05-20 00:12:54'),
+(6, 'eba31fde-12f0-4a26-8354-8adaf153f340', 'twitter', '🐦📷🤔', 9, '鳥＝Twitter、カメラ＝スクショ共有、考え中＝つぶやき。完璧な組み合わせ', 'またんま', '2026-05-20 00:38:29'),
+(7, 'eba31fde-12f0-4a26-8354-8adaf153f340', 'サファリ', '🦏🦒📷', 7, 'サファリの光景が鮮烈。カメラで撮影する観光体験が完璧に表現されている', NULL, '2026-05-20 00:38:29'),
+(8, 'eba31fde-12f0-4a26-8354-8adaf153f340', '宇宙', '🌍🌠🌌☄️', 9, '宇宙の要素が全て揃い、壮大な宇宙の風景が鮮烈に浮かぶ。', 'またんま', '2026-05-20 00:38:29');
+
+--
+-- ダンプしたテーブルのインデックス
+--
+
+--
+-- テーブルのインデックス `emojis`
+--
+ALTER TABLE `emojis`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- テーブルのインデックス `game_logs`
+--
+ALTER TABLE `game_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_session` (`session_id`),
+  ADD KEY `idx_score` (`ai_score`);
+
+--
+-- ダンプしたテーブルの AUTO_INCREMENT
+--
+
+--
+-- テーブルの AUTO_INCREMENT `emojis`
+--
+ALTER TABLE `emojis`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- テーブルの AUTO_INCREMENT `game_logs`
+--
+ALTER TABLE `game_logs`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

@@ -9,6 +9,8 @@ class HandScene extends Phaser.Scene {
     this.stickerContainers = [];
     this.roleListItems = [];
     this.inputEl = null;
+    this.nextScene = data.nextScene || 'ResultScene';
+    this.roomId    = data.roomId    || null;
   }
 
   create() {
@@ -409,7 +411,7 @@ class HandScene extends Phaser.Scene {
 
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.time.delayedCall(300, () => {
-      this.scene.start('ResultScene', { roles: this.roles, sessionId });
+      this.scene.start(this.nextScene, { roles: this.roles, sessionId, roomId: this.roomId });
     });
   }
 

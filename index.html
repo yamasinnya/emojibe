@@ -101,6 +101,23 @@
     .play-btn:active {
       transform: scale(0.97);
     }
+    .play-btn-multi {
+      display: inline-block;
+      background: #c03020;
+      color: #fff0f0;
+      font-size: 18px;
+      font-weight: bold;
+      font-family: inherit;
+      padding: 14px 36px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .play-btn-multi:hover { background: #d84040; transform: scale(1.04); }
+    .play-btn-multi:active { transform: scale(0.97); }
     .version {
       color: #6a5040;
       font-size: 11px;
@@ -118,7 +135,8 @@
       <div class="tagline">絵文字で役を作る取り合いゲーム</div>
     </div>
     <a href="game.html" class="play-btn">ソロモードで遊ぶ</a>
-    <div class="version">v0.1.0 — やまし制作</div>
+    <a href="room_host.html" class="play-btn-multi">対人戦で遊ぶ ⚔️</a>
+    <div class="version">v0.2.0 — やまし制作</div>
   </div>
 </body>
 </html>
