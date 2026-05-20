@@ -7,7 +7,6 @@ class ResultScene extends Phaser.Scene {
     this.scores = [];
     this.totalScore = 0;
     this.scoringIndex = 0;
-    this.nameInputEl = null;
   }
 
   create() {
@@ -93,7 +92,6 @@ class ResultScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     againBtn.on('pointerdown', () => {
-      this.cleanupDom();
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(300, () => this.scene.start('FieldScene'));
     });
@@ -107,7 +105,6 @@ class ResultScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     homeBtn.on('pointerdown', () => {
-      this.cleanupDom();
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(300, () => this.scene.start('TopScene'));
     });
@@ -147,15 +144,14 @@ class ResultScene extends Phaser.Scene {
       })
     });
 
-    if (!response.ok) throw new Error('API error');
+    if (!response.ok) throw new Error('HTTP ' + response.status);
 
     const data = await response.json();
     if (typeof data.score === 'number') return data;
-    return { score: 1, comment: '面白い組み合わせ！' };
+    throw new Error('invalid response: ' + JSON.stringify(data));
   }
 
   showRoleCard(role, result) {
-    const W = this.scale.width;
     const cardX = this.resultAreaBounds.x + 16;
     const cardY = this.nextCardY;
     const cardW = this.resultAreaBounds.w - 32;
@@ -168,6 +164,7 @@ class ResultScene extends Phaser.Scene {
     cardContainer.setAngle(angle);
     cardContainer.setAlpha(0);
     cardContainer.setScale(0.7);
+    cardContainer.setDepth(1);
 
     const scoreColor = result.score >= 8 ? 0xffd700
                      : result.score >= 5 ? 0xffa040
@@ -223,7 +220,7 @@ class ResultScene extends Phaser.Scene {
 
     if (this.waitingText) this.waitingText.destroy();
 
-    const totalContainer = this.add.container(W / 2, totalY);
+    const totalContainer = this.add.container(W / 2, totalY).setDepth(1);
     totalContainer.setAlpha(0);
 
     const totalBg = this.add.graphics();
@@ -247,10 +244,11 @@ class ResultScene extends Phaser.Scene {
       ease: 'Back.out'
     });
 
+    // DB保存して、2.5秒後に殿堂入り確認
     this.saveToDb().then(() => {
       const best = this.scores.reduce((a, b) => a.score > b.score ? a : b, { score: -99 });
       if (best.score >= 8) {
-        this.time.delayedCall(1200, () => this.showNameInput(best));
+        this.time.delayedCall(2500, () => this.showNameInput(best));
       }
     });
   }
@@ -274,105 +272,106 @@ class ResultScene extends Phaser.Scene {
     const W = this.scale.width;
     const H = this.scale.height;
 
+    const objs = [];
+
     const overlay = this.add.graphics().setDepth(50);
-    overlay.fillStyle(0x000000, 0.65);
+    overlay.fillStyle(0x000000, 0.72);
     overlay.fillRect(0, 0, W, H);
+    objs.push(overlay);
 
-    const cardY = H / 2 - 110;
-    const cardH = 220;
+    const cardH = 200;
+    const cardY = H / 2 - cardH / 2;
+    const cardX = 24;
+    const cardW = W - 48;
     overlay.fillStyle(0xf8f4e8, 1);
-    overlay.fillRoundedRect(24, cardY, W - 48, cardH, 12);
+    overlay.fillRoundedRect(cardX, cardY, cardW, cardH, 12);
 
-    this.add.text(W / 2, cardY + 28, '🏆  殿堂入り！', {
-      fontSize: '18px',
-      color: '#c03020',
-      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(51);
+    objs.push(this.add.text(W / 2, cardY + 32, '🏆  殿堂入り！', {
+      fontSize: '18px', color: '#c03020',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(51));
 
-    this.add.text(W / 2, cardY + 58,
-      `「${bestRole.name}」+${bestRole.score}点`, {
-      fontSize: '13px',
-      color: '#7a5a30',
+    objs.push(this.add.text(W / 2, cardY + 66,
+      `「${bestRole.name}」 +${bestRole.score}点`, {
+      fontSize: '13px', color: '#7a5a30',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif'
-    }).setOrigin(0.5).setDepth(51);
+    }).setOrigin(0.5).setDepth(51));
 
-    this.add.text(W / 2, cardY + 84, '名前をつけますか？', {
-      fontSize: '13px',
-      color: '#4a3520',
-      fontFamily: 'sans-serif'
-    }).setOrigin(0.5).setDepth(51);
-
-    const input = this.add.dom(W / 2, cardY + 122, 'input').setDepth(52);
-    input.node.type = 'text';
-    input.node.placeholder = 'ニックネーム（10文字以内）';
-    input.node.maxLength = 10;
-    input.node.style.cssText = [
-      'width: 220px', 'padding: 8px 14px', 'font-size: 15px',
-      'font-family: Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
-      'border: 2px solid #b0a080', 'border-radius: 20px',
-      'background: rgba(255,254,240,0.97)', 'text-align: center',
-      'outline: none', 'color: #4a3520', 'display: block',
-      'margin: 0', 'box-sizing: border-box',
-    ].join(';');
-    this.nameInputEl = input;
+    objs.push(this.add.text(W / 2, cardY + 96, '名前をつけますか？', {
+      fontSize: '13px', color: '#4a3520', fontFamily: 'sans-serif'
+    }).setOrigin(0.5).setDepth(51));
 
     // 登録ボタン
     const regBg = this.add.graphics().setDepth(51);
-    const drawReg = (c) => { regBg.clear(); regBg.fillStyle(c, 1); regBg.fillRoundedRect(W/2 - 100, cardY + 158, 88, 34, 17); };
+    const drawReg = (c) => {
+      regBg.clear();
+      regBg.fillStyle(c, 1);
+      regBg.fillRoundedRect(W / 2 - 104, cardY + 128, 96, 38, 19);
+    };
     drawReg(0xc0302a);
-    const regBtn = this.add.text(W/2 - 56, cardY + 175, '登録する', {
-      fontSize: '13px', color: '#fff0f0',
+    objs.push(regBg);
+
+    const regBtn = this.add.text(W / 2 - 56, cardY + 147, '名前を入れる', {
+      fontSize: '12px', color: '#fff0f0',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(52);
+    objs.push(regBtn);
     regBtn.on('pointerover', () => drawReg(0xd84040));
     regBtn.on('pointerout', () => drawReg(0xc0302a));
-    regBtn.on('pointerdown', () => this.submitName(overlay, input, regBtn, skipBtn, regBg));
+    regBtn.on('pointerdown', () => {
+      const name = window.prompt('ニックネームを入れてね（10文字以内）');
+      if (name && name.trim()) {
+        const trimmed = name.trim().slice(0, 10);
+        this.savePlayerName(trimmed);
+        this.showRegistrationSuccess(trimmed, objs);
+      }
+    });
 
     // スキップボタン
     const skipBg = this.add.graphics().setDepth(51);
-    const drawSkip = (c) => { skipBg.clear(); skipBg.fillStyle(c, 1); skipBg.fillRoundedRect(W/2 + 12, cardY + 158, 88, 34, 17); };
+    const drawSkip = (c) => {
+      skipBg.clear();
+      skipBg.fillStyle(c, 1);
+      skipBg.fillRoundedRect(W / 2 + 8, cardY + 128, 96, 38, 19);
+    };
     drawSkip(0x7c5a2d);
-    const skipBtn = this.add.text(W/2 + 56, cardY + 175, 'スキップ', {
-      fontSize: '13px', color: '#f5e6c8',
+    objs.push(skipBg);
+
+    const skipBtn = this.add.text(W / 2 + 56, cardY + 147, 'スキップ', {
+      fontSize: '12px', color: '#f5e6c8',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(52);
+    objs.push(skipBtn);
     skipBtn.on('pointerover', () => drawSkip(0x9a7040));
     skipBtn.on('pointerout', () => drawSkip(0x7c5a2d));
-    skipBtn.on('pointerdown', () => this.closeNameInput(overlay, input, regBtn, skipBtn, regBg, skipBg));
+    skipBtn.on('pointerdown', () => objs.forEach(o => o.destroy()));
   }
 
-  submitName(overlay, input, regBtn, skipBtn, regBg) {
-    const name = input.node.value.trim();
-    if (!name) { input.node.focus(); return; }
-
+  savePlayerName(name) {
     fetch('api/save_name.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: this.sessionId, player_name: name })
     }).catch(() => {});
+  }
 
+  showRegistrationSuccess(name, objs) {
+    objs.forEach(o => o.destroy());
     const W = this.scale.width;
-    this.add.text(W / 2, overlay.y + 20, `${name} さん、登録しました！`, {
-      fontSize: '14px', color: '#f5e6c8',
-      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(53);
+    const H = this.scale.height;
+    const flash = this.add.text(W / 2, H / 2, `${name} さん、登録完了！🏆`, {
+      fontSize: '15px', color: '#ffffff',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold',
+      backgroundColor: '#c03020',
+      padding: { x: 20, y: 12 }
+    }).setOrigin(0.5).setDepth(55);
 
-    this.time.delayedCall(1500, () =>
-      this.closeNameInput(overlay, input, regBtn, skipBtn, regBg, null)
-    );
-  }
-
-  closeNameInput(overlay, input, regBtn, skipBtn, regBg, skipBg) {
-    if (input) { input.destroy(); this.nameInputEl = null; }
-    [overlay, regBtn, skipBtn, regBg, skipBg].forEach(o => o && o.destroy());
-  }
-
-  cleanupDom() {
-    if (this.nameInputEl) { this.nameInputEl.destroy(); this.nameInputEl = null; }
-  }
-
-  shutdown() {
-    this.cleanupDom();
+    this.tweens.add({
+      targets: flash,
+      y: H / 2 - 40, alpha: 0,
+      duration: 1800, delay: 1000,
+      ease: 'Power2',
+      onComplete: () => flash.destroy()
+    });
   }
 }
