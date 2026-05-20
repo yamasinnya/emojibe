@@ -77,8 +77,12 @@ class ResultSceneMulti extends Phaser.Scene {
       backgroundColor: '#4a3520', padding: { x: 16, y: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     againBtn.on('pointerdown', () => {
+      // 古いセッションをクリアして新しいルームへ
+      const params = new URLSearchParams(location.search);
+      const roomId = params.get('room');
+      if (roomId) sessionStorage.removeItem(`emojibe_multi_${roomId}`);
       this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => this.scene.start('JoinScene'));
+      this.time.delayedCall(300, () => { location.href = 'room_host.html'; });
     });
 
     const homeBtn = this.add.text(W / 2 + 70, 618, 'トップへ', {
@@ -88,7 +92,7 @@ class ResultSceneMulti extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     homeBtn.on('pointerdown', () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => this.scene.start('TopScene'));
+      this.time.delayedCall(300, () => { location.href = 'index.html'; });
     });
   }
 
@@ -113,6 +117,8 @@ class ResultSceneMulti extends Phaser.Scene {
         body: JSON.stringify({ room_id: this.roomId, session_id: this.sessionId, roles })
       });
       const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
 
       this.myResults = data.my_results || [];
       this.myTotal   = this.myResults.reduce((s, r) => s + r.score, 0);

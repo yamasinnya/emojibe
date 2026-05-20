@@ -58,7 +58,7 @@ try {
 
     // 先攻・後攻ランダム決定
     $firstTurn = rand(0, 1) === 0 ? 'host' : 'guest';
-    $deadline  = date('Y-m-d H:i:s', time() + 60); // 初回1分
+    $deadline  = gmdate('Y-m-d H:i:s', time() + 60); // 初回1分（UTC）
 
     $pdo->prepare(
         "INSERT INTO room_players (room_id, session_id, role, initial_hand, hidden_emoji)

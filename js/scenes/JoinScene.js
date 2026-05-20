@@ -81,6 +81,14 @@ class JoinScene extends Phaser.Scene {
       return;
     }
 
+    if (state.status === 'hand') {
+      // ドラフト終了済み・役作りフェーズのルームに再接続した場合はトップへ
+      sessionStorage.removeItem(`emojibe_multi_${roomId}`);
+      this.statusText.setText('このルームは終了しています。新しいゲームへ…');
+      this.time.delayedCall(1500, () => { location.href = 'room_host.html'; });
+      return;
+    }
+
     // 空配列は falsy にならないので length で判定してフォールバック
     const sf = state.field_emojis;
     const fieldEmojis = (Array.isArray(sf) && sf.length > 0)

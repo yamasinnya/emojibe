@@ -77,6 +77,8 @@ PROMPT;
     return ['score' => 3, 'comment' => '面白い組み合わせ！'];
 }
 
+// --- DB接続（失敗しても採点は続ける）---
+$pdo = null;
 try {
     $pdo = new PDO(
         'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
@@ -84,39 +86,50 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
     $pdo->exec("SET time_zone = '+00:00'");
-
-    // 各役を採点して game_logs に保存
-    $myResults = [];
-    foreach ($roles as $role) {
-        $result    = scoreRole($role, $apiKey);
-        $emojiStr  = is_array($role['emojis']) ? implode('', $role['emojis']) : $role['emojis'];
-        $pdo->prepare(
-            "INSERT INTO game_logs (session_id, role_name, emojis, ai_score, ai_comment, room_id)
-             VALUES (?, ?, ?, ?, ?, ?)"
-        )->execute([$sessionId, $role['role_name'], $emojiStr, $result['score'], $result['comment'], $roomId]);
-        $myResults[] = array_merge($role, $result);
-    }
-
-    // 採点済みフラグを立てる
-    $pdo->prepare("UPDATE room_players SET ready_for_score=1 WHERE room_id=? AND session_id=?")
-        ->execute([$roomId, $sessionId]);
-
-    // 両者が採点済みか確認
-    $readyCount = $pdo->prepare("SELECT COUNT(*) FROM room_players WHERE room_id=? AND ready_for_score=1");
-    $readyCount->execute([$roomId]);
-    $bothReady = (int)$readyCount->fetchColumn() >= 2;
-
-    if ($bothReady) {
-        $pdo->prepare("UPDATE rooms SET status='done' WHERE id=?")->execute([$roomId]);
-    } else {
-        $pdo->prepare("UPDATE rooms SET status='scoring' WHERE id=?")->execute([$roomId]);
-    }
-
-    echo json_encode([
-        'my_results'  => $myResults,
-        'opponent_done' => $bothReady,
-    ]);
 } catch (\Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    // DB接続失敗でも採点結果は返す
 }
+
+// --- Claude API で採点（DBエラーに依存しない）---
+$myResults = [];
+foreach ($roles as $role) {
+    $result   = scoreRole($role, $apiKey);
+    $emojiStr = is_array($role['emojis']) ? implode('', $role['emojis']) : $role['emojis'];
+    $myResults[] = [
+        'role_name'  => $role['role_name'],
+        'emojis'     => $role['emojis'],
+        'score'      => $result['score'],
+        'comment'    => $result['comment'],
+    ];
+
+    // DB保存（失敗しても採点結果は返す）
+    if ($pdo) {
+        try {
+            $pdo->prepare(
+                "INSERT INTO game_logs (session_id, role_name, emojis, ai_score, ai_comment, room_id)
+                 VALUES (?, ?, ?, ?, ?, ?)"
+            )->execute([$sessionId, $role['role_name'], $emojiStr, $result['score'], $result['comment'], $roomId]);
+        } catch (\Throwable $dbE) {}
+    }
+}
+
+// --- ルームステータス更新（失敗しても採点結果は返す）---
+$bothReady = false;
+if ($pdo) {
+    try {
+        $pdo->prepare("UPDATE room_players SET ready_for_score=1 WHERE room_id=? AND session_id=?")
+            ->execute([$roomId, $sessionId]);
+
+        $rc = $pdo->prepare("SELECT COUNT(*) FROM room_players WHERE room_id=? AND ready_for_score=1");
+        $rc->execute([$roomId]);
+        $bothReady = (int)$rc->fetchColumn() >= 2;
+
+        $pdo->prepare("UPDATE rooms SET status=? WHERE id=?")
+            ->execute([$bothReady ? 'done' : 'scoring', $roomId]);
+    } catch (\Throwable $dbE) {}
+}
+
+echo json_encode([
+    'my_results'    => $myResults,
+    'opponent_done' => $bothReady,
+]);

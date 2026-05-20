@@ -45,7 +45,7 @@ try {
     $now = time();
 
     // タイムアウトチェック：相手のターンが時間切れなら自動取得
-    if ($room['turn_deadline'] && strtotime($room['turn_deadline']) < $now) {
+    if ($room['turn_deadline'] && strtotime($room['turn_deadline'] . ' UTC') < $now) {
         $expiredTurn = $room['current_turn'];
         if ($expiredTurn !== $me['role']) {
             // 相手が時間切れ → 相手のための自動取得
@@ -127,11 +127,11 @@ try {
 
     // 次のターンへ
     $nextTurn = $me['role'] === 'host' ? 'guest' : 'host';
-    $deadline = date('Y-m-d H:i:s', $now + 30);
+    $deadline = gmdate('Y-m-d H:i:s', $now + 30); // UTC
 
     // 12ターン（各プレイヤー6回）で終了
     if ($turnNum >= 12) {
-        $handDeadline = date('Y-m-d H:i:s', $now + 180); // 3分
+        $handDeadline = gmdate('Y-m-d H:i:s', $now + 180); // 3分（UTC）
         $pdo->prepare(
             "UPDATE rooms SET status='hand', hand_deadline=?, turn_deadline=NULL WHERE id=?"
         )->execute([$handDeadline, $roomId]);
