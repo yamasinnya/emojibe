@@ -9,8 +9,9 @@ class HandScene extends Phaser.Scene {
     this.stickerContainers = [];
     this.roleListItems = [];
     this.inputEl = null;
-    this.nextScene = data.nextScene || 'ResultScene';
-    this.roomId    = data.roomId    || null;
+    this.nextScene  = data.nextScene  || 'ResultScene';
+    this.roomId     = data.roomId     || null;
+    this.sessionId  = data.sessionId  || null;
   }
 
   create() {
@@ -403,7 +404,7 @@ class HandScene extends Phaser.Scene {
       this.inputEl.destroy();
     }
 
-    const sessionId = (crypto.randomUUID ? crypto.randomUUID() :
+    const sessionId = this.sessionId || (crypto.randomUUID ? crypto.randomUUID() :
       'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
         const r = Math.random() * 16 | 0;
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
