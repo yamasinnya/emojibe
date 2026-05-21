@@ -177,7 +177,7 @@ class ResultSceneMulti extends Phaser.Scene {
 
     const emojiImgs = [];
     const emojiStr = (result.emojis || []);
-    const emojis = (typeof emojiStr === 'string' ? emojiStr.split('') : emojiStr);
+    const emojis = Array.isArray(emojiStr) ? emojiStr : [...(emojiStr || '')];
     emojis.slice(0, 6).forEach((e, idx) => {
       const ec = typeof e === 'string' ? e : e.emoji;
       try {
@@ -233,7 +233,7 @@ class ResultSceneMulti extends Phaser.Scene {
     try {
       const res   = await fetch(`api/room_state.php?room_id=${this.roomId}&session_id=${this.sessionId}`);
       const state = await res.json();
-      if (state.status === 'done' || (state.opp_results && state.opp_results.length > 0)) {
+      if (state.status === 'done') {
         if (this.pollEvent) { this.pollEvent.remove(); this.pollEvent = null; }
         this.oppResults = state.opp_results || [];
         this._showOpponentResults(state);

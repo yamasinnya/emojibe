@@ -94,7 +94,7 @@ try {
 $myResults = [];
 foreach ($roles as $role) {
     $result   = scoreRole($role, $apiKey);
-    $emojiStr = is_array($role['emojis']) ? implode('', $role['emojis']) : $role['emojis'];
+    $emojiStr = json_encode($role['emojis'] ?? []);
     $myResults[] = [
         'role_name'  => $role['role_name'],
         'emojis'     => $role['emojis'],

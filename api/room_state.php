@@ -89,7 +89,9 @@ try {
             );
             $logs->execute([$roomId]);
             foreach ($logs->fetchAll(PDO::FETCH_ASSOC) as $log) {
-                $entry = ['role_name'=>$log['role_name'],'emojis'=>$log['emojis'],
+                $rawEmojis = json_decode($log['emojis'] ?? '[]', true);
+                $entry = ['role_name'=>$log['role_name'],
+                          'emojis'=> is_array($rawEmojis) ? $rawEmojis : [],
                           'score'=>$log['ai_score'],'comment'=>$log['ai_comment']];
                 if ($log['session_id'] === $sessionId) $myResults[]  = $entry;
                 else                                    $oppResults[] = $entry;
