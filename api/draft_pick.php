@@ -73,7 +73,7 @@ try {
                 $expiredPicked = json_decode($expiredPlayer['picked_emojis'] ?? '[]', true);
                 $expiredPicked[] = $autoEmoji;
                 $pdo->prepare("UPDATE room_players SET picked_emojis=? WHERE room_id=? AND role=?")
-                    ->execute([json_encode($expiredPicked), $roomId, $expiredTurn]);
+                    ->execute([json_encode($expiredPicked, JSON_UNESCAPED_UNICODE), $roomId, $expiredTurn]);
                 $pdo->prepare(
                     "INSERT INTO draft_logs (room_id, session_id, turn_number, emoji, is_auto) VALUES (?,?,?,?,1)"
                 )->execute([$roomId, $expiredPlayer['session_id'], $turnCount + 1, $autoEmoji['emoji']]);
@@ -114,7 +114,7 @@ try {
     $myPicked   = json_decode($me['picked_emojis'] ?? '[]', true);
     $myPicked[] = $emojiObj;
     $pdo->prepare("UPDATE room_players SET picked_emojis=? WHERE room_id=? AND session_id=?")
-        ->execute([json_encode($myPicked), $roomId, $sessionId]);
+        ->execute([json_encode($myPicked, JSON_UNESCAPED_UNICODE), $roomId, $sessionId]);
 
     // ターン番号記録
     $turnNumQ = $pdo->prepare("SELECT COUNT(*) FROM draft_logs WHERE room_id=?");

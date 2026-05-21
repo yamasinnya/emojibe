@@ -65,7 +65,7 @@ try {
          VALUES (?, ?, 'guest', ?, ?)"
     )->execute([
         $roomId, $guestSess,
-        json_encode($guestHand),
+        json_encode($guestHand, JSON_UNESCAPED_UNICODE),
         $guestHand[$hiddenIdx]['emoji']
     ]);
 
