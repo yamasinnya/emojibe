@@ -28,14 +28,14 @@ try {
 
     $pdo->prepare(
         "INSERT INTO rooms (id, field_emojis, status, host_session) VALUES (?, ?, 'waiting', ?)"
-    )->execute([$roomId, json_encode($fieldEmojis, JSON_UNESCAPED_UNICODE), $hostSess]);
+    )->execute([$roomId, json_encode($fieldEmojis), $hostSess]);
 
     $pdo->prepare(
         "INSERT INTO room_players (room_id, session_id, role, initial_hand, hidden_emoji)
          VALUES (?, ?, 'host', ?, ?)"
     )->execute([
         $roomId, $hostSess,
-        json_encode($hostHand, JSON_UNESCAPED_UNICODE),
+        json_encode($hostHand),
         $hostHand[$hiddenIdx]['emoji']
     ]);
 

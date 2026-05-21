@@ -175,12 +175,14 @@ class ResultSceneMulti extends Phaser.Scene {
       { fontSize: '13px', color: '#4a3520', fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold' }
     );
 
+    const emojiImgs = [];
     const emojiStr = (result.emojis || []);
     const emojis = (typeof emojiStr === 'string' ? emojiStr.split('') : emojiStr);
     emojis.slice(0, 6).forEach((e, idx) => {
       const ec = typeof e === 'string' ? e : e.emoji;
       try {
-        this.add.image(-cardW / 2 + 14 + idx * 22, -cardH / 2 + 40, emojiKey(ec)).setDisplaySize(18, 18);
+        const img = this.add.image(-cardW / 2 + 14 + idx * 22, -cardH / 2 + 40, emojiKey(ec)).setDisplaySize(18, 18);
+        emojiImgs.push(img);
       } catch(_) {}
     });
 
@@ -194,7 +196,7 @@ class ResultSceneMulti extends Phaser.Scene {
       fontSize: '11px', color: '#6a5a40', fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif'
     });
 
-    cc.add([card, nameText, scoreText, comment]);
+    cc.add([card, nameText, ...emojiImgs, scoreText, comment]);
     this.tweens.add({ targets: cc, alpha: 1, scaleX: 1, scaleY: 1, duration: 400, ease: 'Back.out' });
   }
 
