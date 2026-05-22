@@ -7,12 +7,14 @@ class ResultSceneMulti extends Phaser.Scene {
     this.roomId    = data.roomId    || '';
     this.resuming  = data.resuming  || false;
 
-    this.myResults    = [];
-    this.oppResults   = [];
-    this.myTotal      = 0;
-    this.nextCardY    = 0;
-    this.pollEvent    = null;
-    this.scoringDone  = false;
+    this.myResults         = [];
+    this.oppResults        = [];
+    this.myTotal           = 0;
+    this.nextCardY         = 0;
+    this.pollEvent         = null;
+    this.scoringDone       = false;
+    this._rematchPending   = false;
+    this._rematchPollEvent = null;
   }
 
   create() {
@@ -77,12 +79,10 @@ class ResultSceneMulti extends Phaser.Scene {
       backgroundColor: '#4a3520', padding: { x: 16, y: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     againBtn.on('pointerdown', () => {
-      // 古いセッションをクリアして新しいルームへ
-      const params = new URLSearchParams(location.search);
-      const roomId = params.get('room');
-      if (roomId) sessionStorage.removeItem(`emojibe_multi_${roomId}`);
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => { location.href = 'room_host.html'; });
+      if (this._rematchPending) return;
+      this._rematchPending = true;
+      againBtn.setAlpha(0.5);
+      this._startRematch();
     });
 
     const homeBtn = this.add.text(W / 2 + 70, 618, 'トップへ', {
@@ -388,7 +388,54 @@ class ResultSceneMulti extends Phaser.Scene {
     skipBtn.on('pointerdown', () => objs.forEach(o => o.destroy()));
   }
 
+  _startRematch() {
+    const W = this.scale.width;
+    this._rematchText = this.add.text(W / 2, 648, 'リマッチ申請中... 相手を待っています', {
+      fontSize: '11px', color: '#c8b090', fontFamily: 'sans-serif'
+    }).setOrigin(0.5).setDepth(10);
+    this._rematchDeadline = Date.now() + 30000;
+    this._pollRematch();
+    this._rematchPollEvent = this.time.addEvent({
+      delay: 3000, loop: true,
+      callback: this._pollRematch, callbackScope: this
+    });
+  }
+
+  async _pollRematch() {
+    if (Date.now() > this._rematchDeadline) {
+      if (this._rematchPollEvent) { this._rematchPollEvent.remove(); this._rematchPollEvent = null; }
+      if (this._rematchText) this._rematchText.setText('相手が応答しませんでした');
+      this.time.delayedCall(3000, () => { location.href = 'index.html'; });
+      return;
+    }
+    try {
+      const res  = await fetch('api/rematch.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room_id: this.roomId, session_id: this.sessionId })
+      });
+      const data = await res.json();
+      if (data.status === 'matched') {
+        if (this._rematchPollEvent) { this._rematchPollEvent.remove(); this._rematchPollEvent = null; }
+        sessionStorage.setItem(`emojibe_multi_${data.new_room_id}`, JSON.stringify({
+          sessionId:      data.session_id,
+          role:           data.my_role,
+          initialHand:    data.initial_hand,
+          hiddenIdx:      data.hidden_idx,
+          fieldEmojis:    data.field_emojis,
+          oppInitialHand: data.opp_initial_hand || [],
+        }));
+        sessionStorage.removeItem(`emojibe_multi_${this.roomId}`);
+        this.cameras.main.fadeOut(300, 0, 0, 0);
+        this.time.delayedCall(300, () => {
+          location.href = `game_multi.html?room=${data.new_room_id}`;
+        });
+      }
+    } catch(_) {}
+  }
+
   shutdown() {
-    if (this.pollEvent) this.pollEvent.remove();
+    if (this.pollEvent)         this.pollEvent.remove();
+    if (this._rematchPollEvent) this._rematchPollEvent.remove();
   }
 }
