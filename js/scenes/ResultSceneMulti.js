@@ -182,7 +182,7 @@ class ResultSceneMulti extends Phaser.Scene {
     emojis.slice(0, 6).forEach((e, idx) => {
       const ec = typeof e === 'string' ? e : e.emoji;
       try {
-        const img = this.add.image(-cardW / 2 + 14 + idx * 22, -cardH / 2 + 24, emojiKey(ec)).setDisplaySize(18, 18);
+        const img = this.add.image(-cardW / 2 + 14 + idx * 22, -cardH / 2 + 34, emojiKey(ec)).setDisplaySize(18, 18);
         emojiImgs.push(img);
       } catch(_) {}
     });

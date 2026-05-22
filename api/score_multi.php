@@ -76,6 +76,7 @@ PROMPT;
             if (is_array($r) && isset($r['score'])) return $r;
         }
     }
+    error_log('emojibe score debug: ' . $text);
     return ['score' => 3, 'comment' => '面白い組み合わせ！'];
 }
 
