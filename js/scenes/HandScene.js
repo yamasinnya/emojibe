@@ -121,7 +121,7 @@ class HandScene extends Phaser.Scene {
   }
 
   createInput(W, H) {
-    const inputY = 393;
+    const inputY = 413;
 
     this.add.text(W / 2, inputY - 18, '役名を入力', {
       fontSize: '11px',
@@ -155,7 +155,7 @@ class HandScene extends Phaser.Scene {
 
   createButtons(W, H) {
     // 「役を追加」ボタン
-    const addBtnY = 443;
+    const addBtnY = 473;
     const addBg = this.add.graphics();
     const drawAdd = (color) => {
       addBg.clear();
@@ -176,7 +176,7 @@ class HandScene extends Phaser.Scene {
     this.addBtn.on('pointerdown', () => this.addRole());
 
     // 「採点！」スタンプボタン
-    const scoreBtnY = 495;
+    const scoreBtnY = 533;
     const scoreBg = this.add.graphics();
     const drawScore = (color) => {
       scoreBg.clear();
@@ -197,13 +197,13 @@ class HandScene extends Phaser.Scene {
     this.scoreBtn.on('pointerout', () => drawScore(0xc0302a));
     this.scoreBtn.on('pointerdown', () => this.submitForScoring());
 
-    this.selectionHintText = this.add.text(W / 2, 543, '手帳のシールをタップして選ぼう', {
+    this.selectionHintText = this.add.text(W / 2, 585, '手帳のシールをタップして選ぼう', {
       fontSize: '12px',
       color: '#c8b090',
       fontFamily: 'sans-serif'
     }).setOrigin(0.5);
 
-    this.selectionCountText = this.add.text(W / 2, 565, '', {
+    this.selectionCountText = this.add.text(W / 2, 607, '', {
       fontSize: '12px',
       color: '#a8d5b5',
       fontFamily: 'sans-serif'
@@ -303,6 +303,11 @@ class HandScene extends Phaser.Scene {
 
     if (this.selectedIndices.size === 0) {
       this.showFlash('シールを選んでね！', 0xc08030);
+      return;
+    }
+
+    if (this.selectedIndices.size < 3) {
+      this.showFlash('シールを3枚以上選んでね！', 0xc08030);
       return;
     }
 
