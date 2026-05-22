@@ -201,7 +201,8 @@ class ResultScene extends Phaser.Scene {
     const commentText = this.add.text(-cardW / 2 + 12, -cardH / 2 + 70, result.comment, {
       fontSize: '12px',
       color: '#6a5a40',
-      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif'
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      wordWrap: { width: cardW - 26 }
     });
 
     cardContainer.add([card, roleName, ...emojiImgs, scoreText, commentText]);

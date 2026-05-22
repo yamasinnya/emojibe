@@ -2,6 +2,7 @@ const config = {
   type: Phaser.AUTO,
   width: 375,
   height: 812,
+  resolution: window.devicePixelRatio || 1,
   backgroundColor: '#2a1a0a',
   scale: {
     mode: Phaser.Scale.FIT,

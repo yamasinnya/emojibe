@@ -15,6 +15,7 @@ class ResultSceneMulti extends Phaser.Scene {
     this.scoringDone       = false;
     this._rematchPending   = false;
     this._rematchPollEvent = null;
+    this.popupLayer        = null;
   }
 
   create() {
@@ -192,11 +193,14 @@ class ResultSceneMulti extends Phaser.Scene {
       fontFamily: 'sans-serif', fontStyle: 'bold'
     }).setOrigin(1, 0);
 
-    const comment = this.add.text(-cardW / 2 + 10, -cardH / 2 + 60, result.comment || '', {
-      fontSize: '11px', color: '#6a5a40', fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif'
-    });
+    const chatIcon = this.add.text(cardW / 2 - 14, cardH / 2 - 14, '💬', {
+      fontSize: '18px'
+    }).setOrigin(1, 1);
 
-    cc.add([card, nameText, ...emojiImgs, scoreText, comment]);
+    const hitZone = this.add.zone(0, 0, cardW, cardH).setInteractive({ useHandCursor: true });
+    hitZone.on('pointerdown', () => { if (!this.popupLayer) this._showPopup(result); });
+
+    cc.add([card, nameText, ...emojiImgs, scoreText, chatIcon, hitZone]);
     this.tweens.add({ targets: cc, alpha: 1, scaleX: 1, scaleY: 1, duration: 400, ease: 'Back.out' });
   }
 
@@ -388,6 +392,122 @@ class ResultSceneMulti extends Phaser.Scene {
     skipBtn.on('pointerdown', () => objs.forEach(o => o.destroy()));
   }
 
+  _showPopup(result) {
+    if (this.popupLayer) return;
+    this.popupLayer = [];
+
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const popW = W - 60;
+    const popH = 220;
+    const popX = 30;
+    const popY = H / 2 - popH / 2;
+
+    const isHall    = result.score >= 8;
+    const popColor  = isHall ? 0xfefce8 : 0xfffbeb;
+    const popBorder = isHall ? 0xf59e0b : 0xfbbf24;
+
+    // 暗幕（ふわっと）
+    const overlay = this.add.graphics().setDepth(20).setAlpha(0);
+    overlay.fillStyle(0x000000, 0.6);
+    overlay.fillRect(0, 0, W, H);
+    this.popupLayer.push(overlay);
+
+    // 影
+    const shadow = this.add.graphics().setDepth(21);
+    shadow.fillStyle(0x000000, 0.15);
+    shadow.fillRoundedRect(popX + 4, popY + 4, popW, popH, 16);
+
+    // 付箋風カード
+    const popBg = this.add.graphics().setDepth(22);
+    popBg.fillStyle(popColor, 1);
+    popBg.fillRoundedRect(popX, popY, popW, popH, 16);
+    popBg.lineStyle(2, popBorder, 1);
+    popBg.strokeRoundedRect(popX, popY, popW, popH, 16);
+    this.popupLayer.push(shadow, popBg);
+
+    // スタンプ風点数（右上）
+    const scoreStr = result.score >= 0 ? `+${result.score}点` : `${result.score}点`;
+    const scoreStamp = this.add.text(popX + popW - 16, popY + 16, scoreStr, {
+      fontSize: '28px',
+      color: isHall ? '#b45309' : '#c2410c',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold',
+    }).setOrigin(1, 0).setDepth(23);
+    this.popupLayer.push(scoreStamp);
+
+    // 役名
+    const roleTxt = this.add.text(popX + 20, popY + 20, result.role_name || '', {
+      fontSize: '16px',
+      color: '#44403c',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold',
+      wordWrap: { width: popW - 100 },
+    }).setDepth(23);
+    this.popupLayer.push(roleTxt);
+
+    // 絵文字（大きめ・canvas画像）
+    const emojiObjs = [];
+    const emojis = Array.isArray(result.emojis) ? result.emojis : [];
+    emojis.slice(0, 6).forEach((e, i) => {
+      const ec = typeof e === 'string' ? e : e.emoji;
+      try {
+        const img = this.add.image(popX + 24 + i * 42, popY + 78, emojiKey(ec))
+          .setDisplaySize(36, 36).setOrigin(0, 0.5).setDepth(23);
+        emojiObjs.push(img);
+        this.popupLayer.push(img);
+      } catch(_) {}
+    });
+
+    // 区切り線
+    const divLine = this.add.graphics().setDepth(23);
+    divLine.lineStyle(1, 0xe5e7eb, 0.8);
+    divLine.lineBetween(popX + 20, popY + 118, popX + popW - 20, popY + 118);
+    this.popupLayer.push(divLine);
+
+    // コメント（折り返しあり）
+    const commentTxt = this.add.text(popX + 20, popY + 130, result.comment || '', {
+      fontSize: '13px',
+      color: '#57534e',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      wordWrap: { width: popW - 40 },
+      lineSpacing: 4,
+    }).setDepth(23);
+    this.popupLayer.push(commentTxt);
+
+    // 閉じるヒント
+    const closeTxt = this.add.text(W / 2, popY + popH + 20, 'タップして閉じる', {
+      fontSize: '12px',
+      color: '#d4a853',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+    }).setOrigin(0.5).setDepth(23);
+    this.popupLayer.push(closeTxt);
+
+    // ふわっと表示（y +10 → 元位置）
+    const popItems = [shadow, popBg, scoreStamp, roleTxt, ...emojiObjs, divLine, commentTxt, closeTxt];
+    popItems.forEach(o => { o.setAlpha(0); o.y += 10; });
+    this.tweens.add({ targets: overlay,   alpha: 1, duration: 180, ease: 'Power2' });
+    this.tweens.add({ targets: popItems,  alpha: 1, y: '-=10', duration: 220, ease: 'Power2' });
+
+    // 全画面タップで閉じる（ポップアップ中は背景カードタップ不可）
+    const closeZone = this.add.zone(0, 0, W, H)
+      .setOrigin(0, 0).setInteractive().setDepth(24);
+    closeZone.on('pointerdown', () => {
+      this.tweens.add({
+        targets: [...popItems, overlay],
+        alpha: 0,
+        duration: 150,
+        ease: 'Power2',
+        onComplete: () => {
+          this.popupLayer.forEach(o => o.destroy());
+          closeZone.destroy();
+          this.popupLayer = null;
+        }
+      });
+    });
+    this.popupLayer.push(closeZone);
+  }
+
   _startRematch() {
     const W = this.scale.width;
     this._rematchText = this.add.text(W / 2, 648, 'リマッチ申請中... 相手を待っています', {
@@ -437,5 +557,6 @@ class ResultSceneMulti extends Phaser.Scene {
   shutdown() {
     if (this.pollEvent)         this.pollEvent.remove();
     if (this._rematchPollEvent) this._rematchPollEvent.remove();
+    if (this.popupLayer)        { this.popupLayer.forEach(o => o.destroy()); this.popupLayer = null; }
   }
 }
