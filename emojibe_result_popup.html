@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>えもじべ 結果画面プロト v2</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a0f05;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+<script>
+const RESULTS = [
+  { role: "夜の毛虫こわい", emojis: "🌙🐛😨", score: 7, comment: "三日月の夜に毛虫への恐怖と不安が完璧に表現されている" },
+  { role: "まさかのドラムコンテスト優勝", emojis: "🏅🥁😱", score: 9, comment: "3つの絵文字が役名を完璧に表現。誰もが情景を即座に理解できる完璧な組み合わせ" },
+  { role: "UFO発見！", emojis: "🌙🛸😨", score: 7, comment: "三日月の夜にUFOを発見する情景が明確に浮かび、驚き顔も完璧に合致" },
+];
+
+const W = 375;
+const H = 812;
+
+class ResultScene extends Phaser.Scene {
+  constructor() { super('ResultScene'); }
+
+  create() {
+    this.cameras.main.setBackgroundColor('#2a1a0a');
+    this.popupLayer = null;
+    this.drawBase();
+  }
+
+  drawBase() {
+    // タイトル
+    this.add.text(W/2, 28, '採点結果', {
+      fontSize: '20px',
+      color: '#f5e6c8',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    let y = 64;
+    RESULTS.forEach((r, i) => {
+      const isHall = r.score >= 8;
+      const cardH = 80;
+      const bgColor = isHall ? 0xfef3c7 : r.score >= 5 ? 0xfff7ed : 0xf5f5f0;
+      const borderColor = isHall ? 0xf59e0b : r.score >= 5 ? 0xfb923c : 0xd6d3d1;
+
+      // カード背景
+      const bg = this.add.graphics();
+      bg.fillStyle(bgColor, 1);
+      bg.fillRoundedRect(12, y, W-24, cardH, 12);
+      bg.lineStyle(2, borderColor, 1);
+      bg.strokeRoundedRect(12, y, W-24, cardH, 12);
+
+      // 役名
+      const roleLabel = isHall ? '🏆 ' + r.role : r.role;
+      this.add.text(22, y + 10, roleLabel, {
+        fontSize: '14px',
+        color: '#44403c',
+        fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+        fontStyle: 'bold',
+        wordWrap: { width: W - 110 }
+      });
+
+      // 点数
+      this.add.text(W - 20, y + 12, `+${r.score}点`, {
+        fontSize: '18px',
+        color: '#ef4444',
+        fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+        fontStyle: 'bold'
+      }).setOrigin(1, 0);
+
+      // 絵文字
+      this.add.text(22, y + 42, r.emojis, { fontSize: '22px' });
+
+      // コメントヒント
+      this.add.text(W - 20, y + 46, '💬', { fontSize: '16px' }).setOrigin(1, 0);
+
+      // タップゾーン
+      const zone = this.add.zone(12, y, W-24, cardH)
+        .setOrigin(0, 0)
+        .setInteractive({ useHandCursor: true });
+      zone.on('pointerdown', () => this.showPopup(r));
+
+      y += cardH + 10;
+    });
+
+    // 合計
+    const total = RESULTS.reduce((s, r) => s + r.score, 0);
+    this.add.text(W - 20, y + 8, `合計　+${total}点`, {
+      fontSize: '16px',
+      color: '#f59e0b',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold'
+    }).setOrigin(1, 0);
+
+    // もう一度ボタン
+    const btnY = y + 50;
+    const retryBg = this.add.graphics();
+    retryBg.fillStyle(0xd4a853, 1);
+    retryBg.fillRoundedRect(W/2 - 80, btnY, 160, 44, 22);
+
+    this.add.text(W/2, btnY + 22, 'もう一度', {
+      fontSize: '16px',
+      color: '#2a1a0a',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    retryBg.setInteractive(
+      new Phaser.Geom.Rectangle(W/2 - 80, btnY, 160, 44),
+      Phaser.Geom.Rectangle.Contains
+    );
+  }
+
+  showPopup(result) {
+    // 既存ポップアップ削除
+    if (this.popupLayer) {
+      this.popupLayer.forEach(o => o.destroy());
+    }
+    this.popupLayer = [];
+
+    // 暗幕（ふわっと）
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.6);
+    overlay.fillRect(0, 0, W, H);
+    overlay.setAlpha(0);
+    this.popupLayer.push(overlay);
+
+    // ポップアップ背景（付箋風）
+    const popW = W - 60;
+    const popH = 220;
+    const popX = 30;
+    const popY = H/2 - popH/2;
+
+    const popBg = this.add.graphics();
+    const isHall = result.score >= 8;
+    const popColor = isHall ? 0xfefce8 : 0xfffbeb;
+    const popBorder = isHall ? 0xf59e0b : 0xfbbf24;
+
+    popBg.fillStyle(popColor, 1);
+    popBg.fillRoundedRect(popX, popY, popW, popH, 16);
+    popBg.lineStyle(2, popBorder, 1);
+    popBg.strokeRoundedRect(popX, popY, popW, popH, 16);
+    // 少し傾いた影
+    const shadow = this.add.graphics();
+    shadow.fillStyle(0x000000, 0.15);
+    shadow.fillRoundedRect(popX + 4, popY + 4, popW, popH, 16);
+    shadow.setDepth(9);
+    popBg.setDepth(10);
+    this.popupLayer.push(shadow, popBg);
+
+    // スタンプ風の点数
+    const scoreStamp = this.add.text(popX + popW - 20, popY + 16, `+${result.score}点`, {
+      fontSize: '28px',
+      color: result.score >= 8 ? '#b45309' : '#c2410c',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold',
+      alpha: 0.85
+    }).setOrigin(1, 0).setDepth(11);
+    this.popupLayer.push(scoreStamp);
+
+    // 役名
+    const roleLabel = isHall ? '🏆 ' + result.role : result.role;
+    const roleTxt = this.add.text(popX + 20, popY + 20, roleLabel, {
+      fontSize: '16px',
+      color: '#44403c',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      fontStyle: 'bold',
+      wordWrap: { width: popW - 100 }
+    }).setDepth(11);
+    this.popupLayer.push(roleTxt);
+
+    // 絵文字（大きめ）
+    const emojiTxt = this.add.text(popX + 20, popY + 70, result.emojis, {
+      fontSize: '32px'
+    }).setDepth(11);
+    this.popupLayer.push(emojiTxt);
+
+    // 区切り
+    const divLine = this.add.graphics().setDepth(11);
+    divLine.lineStyle(1, 0xe5e7eb, 0.8);
+    divLine.lineBetween(popX + 20, popY + 118, popX + popW - 20, popY + 118);
+    this.popupLayer.push(divLine);
+
+    // コメント
+    const commentTxt = this.add.text(popX + 20, popY + 130, result.comment, {
+      fontSize: '13px',
+      color: '#57534e',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+      wordWrap: { width: popW - 40 },
+      lineSpacing: 4
+    }).setDepth(11);
+    this.popupLayer.push(commentTxt);
+
+    // 閉じるヒント
+    const closeTxt = this.add.text(W/2, popY + popH + 20, 'タップして閉じる', {
+      fontSize: '12px',
+      color: '#d4a853',
+      fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
+    }).setOrigin(0.5).setDepth(11);
+    this.popupLayer.push(closeTxt);
+
+    // ふわっと表示アニメ
+    const popItems = [popBg, shadow, scoreStamp, roleTxt, emojiTxt, divLine, commentTxt, closeTxt];
+    popItems.forEach(o => { o.setAlpha(0); o.y += 10; });
+
+    this.tweens.add({
+      targets: overlay,
+      alpha: 1,
+      duration: 180,
+      ease: 'Power2'
+    });
+    this.tweens.add({
+      targets: popItems,
+      alpha: 1,
+      y: '-=10',
+      duration: 220,
+      ease: 'Power2'
+    });
+
+    // 閉じるゾーン
+    const closeZone = this.add.zone(0, 0, W, H)
+      .setOrigin(0, 0)
+      .setInteractive()
+      .setDepth(12);
+    closeZone.on('pointerdown', () => {
+      this.tweens.add({
+        targets: [...popItems, overlay],
+        alpha: 0,
+        duration: 150,
+        ease: 'Power2',
+        onComplete: () => {
+          this.popupLayer.forEach(o => o.destroy());
+          closeZone.destroy();
+          this.popupLayer = null;
+        }
+      });
+    });
+    this.popupLayer.push(closeZone);
+  }
+}
+
+new Phaser.Game({
+  type: Phaser.AUTO,
+  width: W,
+  height: H,
+  resolution: window.devicePixelRatio || 1,
+  backgroundColor: '#2a1a0a',
+  scene: ResultScene,
+  parent: document.body,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  }
+});
+</script>
+</body>
+</html>
