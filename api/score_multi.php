@@ -70,9 +70,11 @@ PROMPT;
     $api  = json_decode($res, true);
     $text = $api['content'][0]['text'] ?? '';
     $m    = [];
-    if (preg_match('/\{[\s\S]*?\}/', $text, $m)) {
-        $r = json_decode($m[0], true);
-        if (isset($r['score'])) return $r;
+    if (preg_match_all('/\{[^{}]*\}/', $text, $ms)) {
+        foreach ($ms[0] as $candidate) {
+            $r = json_decode($candidate, true);
+            if (is_array($r) && isset($r['score'])) return $r;
+        }
     }
     return ['score' => 3, 'comment' => '面白い組み合わせ！'];
 }

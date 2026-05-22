@@ -70,7 +70,7 @@ class ResultSceneMulti extends Phaser.Scene {
       grid.beginPath(); grid.moveTo(nbX, gy); grid.lineTo(nbX + nbW, gy); grid.strokePath();
     }
     this.resultAreaBounds = { x: nbX, y: nbY, w: nbW, h: nbH };
-    this.nextCardY = nbY + 28;
+    this.nextCardY = nbY + 18;
   }
 
   _createButtons(W) {
@@ -152,8 +152,8 @@ class ResultSceneMulti extends Phaser.Scene {
     const cardX = this.resultAreaBounds.x + 16;
     const cardY = this.nextCardY;
     const cardW = this.resultAreaBounds.w - 32;
-    const cardH = 88;
-    this.nextCardY += cardH + 10;
+    const cardH = 66;
+    this.nextCardY += cardH + 6;
 
     const scoreColor = result.score >= 8 ? 0xffd700
                      : result.score >= 5 ? 0xffa040
@@ -182,18 +182,18 @@ class ResultSceneMulti extends Phaser.Scene {
     emojis.slice(0, 6).forEach((e, idx) => {
       const ec = typeof e === 'string' ? e : e.emoji;
       try {
-        const img = this.add.image(-cardW / 2 + 14 + idx * 22, -cardH / 2 + 40, emojiKey(ec)).setDisplaySize(18, 18);
+        const img = this.add.image(-cardW / 2 + 14 + idx * 22, -cardH / 2 + 24, emojiKey(ec)).setDisplaySize(18, 18);
         emojiImgs.push(img);
       } catch(_) {}
     });
 
     const scoreStr = result.score >= 0 ? `+${result.score}点` : `${result.score}点`;
-    const scoreText = this.add.text(cardW / 2 - 10, -cardH / 2 + 14, scoreStr, {
-      fontSize: '20px', color: result.score >= 0 ? '#c03020' : '#606060',
+    const scoreText = this.add.text(cardW / 2 - 10, -cardH / 2 + 8, scoreStr, {
+      fontSize: '18px', color: result.score >= 0 ? '#c03020' : '#606060',
       fontFamily: 'sans-serif', fontStyle: 'bold'
     }).setOrigin(1, 0);
 
-    const chatIcon = this.add.text(cardW / 2 - 14, cardH / 2 - 14, '💬', {
+    const chatIcon = this.add.text(cardW / 2 - 14, cardH / 2 - 8, '💬', {
       fontSize: '18px'
     }).setOrigin(1, 1);
 
@@ -206,16 +206,16 @@ class ResultSceneMulti extends Phaser.Scene {
 
   _showMyTotal() {
     const W = this.scale.width;
-    const totalY = this.nextCardY + 14;
-    this.nextCardY = totalY + 50;
+    const totalY = this.nextCardY + 6;
+    this.nextCardY = totalY + 36;
 
     const tc = this.add.container(W / 2, totalY).setDepth(1).setAlpha(0);
     const bg = this.add.graphics();
     bg.fillStyle(0x4a7c59, 1);
-    bg.fillRoundedRect(-120, -22, 240, 44, 8);
+    bg.fillRoundedRect(-100, -17, 200, 34, 8);
     const label = this.add.text(0, 0,
       `自分の合計　${this.myTotal >= 0 ? '+' : ''}${this.myTotal}点`, {
-      fontSize: '18px', color: '#f0fff0',
+      fontSize: '15px', color: '#f0fff0',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
     }).setOrigin(0.5);
     tc.add([bg, label]);
@@ -258,12 +258,6 @@ class ResultSceneMulti extends Phaser.Scene {
     if (this.waitingText) { this.waitingText.destroy(); this.waitingText = null; }
 
     const W = this.scale.width;
-    // VS仕切り線
-    const divY = this.nextCardY + 10;
-    this.nextCardY = divY + 28;
-    const divText = this.add.text(W / 2, divY, '── VS ──', {
-      fontSize: '13px', color: '#c03020', fontFamily: 'sans-serif'
-    }).setOrigin(0.5).setDepth(1);
 
     // 相手のカードを1枚ずつ表示
     let idx = 0;
@@ -284,7 +278,7 @@ class ResultSceneMulti extends Phaser.Scene {
     const oppTotal = state.opp_total ?? this.oppResults.reduce((s, r) => s + r.score, 0);
     const winner   = state.winner;
 
-    const winnerY = this.nextCardY + 20;
+    const winnerY = this.nextCardY + 8;
     const wc = this.add.container(W / 2, winnerY).setDepth(2).setAlpha(0);
 
     const myT  = this.myTotal;
@@ -296,9 +290,9 @@ class ResultSceneMulti extends Phaser.Scene {
 
     const bg = this.add.graphics();
     bg.fillStyle(bgColor, 1);
-    bg.fillRoundedRect(-145, -28, 290, 56, 10);
+    bg.fillRoundedRect(-130, -20, 260, 40, 10);
     const text = this.add.text(0, 0, label, {
-      fontSize: '16px', color: '#fff',
+      fontSize: '14px', color: '#fff',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
     }).setOrigin(0.5);
     wc.add([bg, text]);
@@ -470,7 +464,7 @@ class ResultSceneMulti extends Phaser.Scene {
       fontSize: '13px',
       color: '#57534e',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
-      wordWrap: { width: popW - 40 },
+      wordWrap: { width: popW - 44, useAdvancedWrap: true },
       lineSpacing: 4,
     }).setDepth(23);
     this.popupLayer.push(commentTxt);
