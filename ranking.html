@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>えもじべ — 殿堂入りランキング</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #2a1a0a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Hiragino Maru Gothic Pro', 'Yu Gothic', 'BIZ UDGothic', sans-serif;
+      padding-bottom: 40px;
+    }
+    .wood-bg {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #3d2b1a 0%, #2a1a0a 100%);
+      z-index: 0;
+    }
+    .wood-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        170deg,
+        transparent,
+        transparent 48px,
+        rgba(74, 53, 32, 0.25) 48px,
+        rgba(74, 53, 32, 0.25) 50px
+      );
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .page-title {
+      color: #f5e6c8;
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      text-align: center;
+      padding: 16px 0 4px;
+    }
+    .page-sub {
+      color: #c8b090;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-top: -8px;
+    }
+    .notebook {
+      width: 100%;
+      background: #f8f4e8;
+      border-radius: 8px;
+      box-shadow: 4px 4px 20px rgba(0,0,0,0.4);
+      border: 1px solid #e0d8c0;
+      background-image:
+        linear-gradient(rgba(200, 208, 232, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 208, 232, 0.4) 1px, transparent 1px);
+      background-size: 20px 20px;
+      overflow: hidden;
+    }
+    .notebook-header {
+      background: rgba(74, 53, 32, 0.08);
+      border-bottom: 1px solid #e0d8c0;
+      padding: 10px 16px;
+      font-size: 11px;
+      color: #8a7560;
+      letter-spacing: 3px;
+      text-align: center;
+    }
+    .rank-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(200, 208, 232, 0.5);
+    }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-num {
+      font-size: 13px;
+      font-weight: bold;
+      color: #8a7560;
+      min-width: 22px;
+      text-align: center;
+    }
+    .rank-num.top3 { color: #c03020; font-size: 15px; }
+    .score-badge {
+      min-width: 44px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: bold;
+      padding: 3px 6px;
+      border-radius: 12px;
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fcd34d;
+    }
+    .score-badge.perfect {
+      background: #fef9e7;
+      color: #c03020;
+      border-color: #c03020;
+      font-size: 16px;
+    }
+    .role-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .role-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #4a3520;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .role-emojis {
+      font-size: 18px;
+      letter-spacing: 2px;
+      margin: 2px 0;
+    }
+    .role-meta {
+      font-size: 10px;
+      color: #a0988c;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .role-comment {
+      font-size: 11px;
+      color: #7a6a50;
+      margin-top: 2px;
+    }
+    .empty-msg {
+      padding: 32px;
+      text-align: center;
+      color: #8a7560;
+      font-size: 13px;
+    }
+    .back-btn {
+      display: inline-block;
+      background: #7c5a2d;
+      color: #f5e6c8;
+      font-size: 15px;
+      font-weight: bold;
+      font-family: inherit;
+      padding: 12px 32px;
+      border-radius: 24px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .back-btn:hover { background: #9a7040; transform: scale(1.04); }
+    .back-btn:active { transform: scale(0.97); }
+    .loading { color: #c8b090; font-size: 13px; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wood-bg"></div>
+  <div class="content">
+    <div class="page-title">🏆 殿 堂 入 り</div>
+    <div class="page-sub">8点以上の役だけが載る</div>
+    <div class="notebook" id="notebook">
+      <div class="notebook-header">高 得 点 ラ ン キ ン グ</div>
+      <div class="loading" id="loading">読み込み中...</div>
+    </div>
+    <a href="index.html" class="back-btn">← トップへ戻る</a>
+  </div>
+
+  <script>
+    (async () => {
+      const notebook = document.getElementById('notebook');
+      const loading  = document.getElementById('loading');
+      try {
+        const res  = await fetch('api/ranking.php');
+        const data = await res.json();
+        loading.remove();
+
+        const rows = data.ranking || [];
+        if (rows.length === 0) {
+          notebook.insertAdjacentHTML('beforeend',
+            '<div class="empty-msg">まだ殿堂入りがいません。<br>8点以上を目指そう！</div>');
+          return;
+        }
+
+        rows.forEach((row, i) => {
+          const rank    = i + 1;
+          const emojis  = (row.emojis || []).join('');
+          const name    = row.player_name || '名無し';
+          const date    = row.created_at ? row.created_at.slice(0, 10) : '';
+          const isPerfect = row.ai_score >= 10;
+          const isTop3    = rank <= 3;
+
+          const el = document.createElement('div');
+          el.className = 'rank-row';
+          el.innerHTML = `
+            <div class="rank-num${isTop3 ? ' top3' : ''}">${rank}</div>
+            <div class="score-badge${isPerfect ? ' perfect' : ''}">+${row.ai_score}点</div>
+            <div class="role-info">
+              <div class="role-name">${escHtml(row.role_name)}</div>
+              <div class="role-emojis">${emojis}</div>
+              <div class="role-comment">${escHtml(row.ai_comment || '')}</div>
+              <div class="role-meta">${escHtml(name)}　${date}</div>
+            </div>`;
+          notebook.appendChild(el);
+        });
+      } catch (e) {
+        loading.textContent = '読み込みに失敗しました';
+      }
+    })();
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>
