@@ -25,12 +25,7 @@ class BootScene extends Phaser.Scene {
       this._makeEmojiTexture(e.emoji, SIZE);
     });
 
-    // TopScene の装飾絵文字（EMOJISにないものも含む）
-    ['🎲', '🌸', '⭐', '🎯'].forEach(emoji => {
-      this._makeEmojiTexture(emoji, SIZE);
-    });
-
-    this.time.delayedCall(400, () => this.scene.start('TopScene'));
+    this.time.delayedCall(400, () => this.scene.start('FieldScene'));
   }
 
   _makeEmojiTexture(emoji, size) {
