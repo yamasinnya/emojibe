@@ -10,7 +10,7 @@ const GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  scene: [BootScene, TopScene, FieldScene, HandScene, ResultScene]
+  scene: [BootScene, FieldScene, HandScene, ResultScene]
 };
 
 new Phaser.Game(GameConfig);
