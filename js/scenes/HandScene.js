@@ -147,8 +147,10 @@ class HandScene extends Phaser.Scene {
       'display: block',
       'margin: 0',
       'box-sizing: border-box',
+      'position: absolute',
+      'left: 50%',
+      'transform: translateX(-50%)',
     ].join(';');
-    input.setOrigin(0.5, 0.5);
 
     this.inputEl = input;
   }

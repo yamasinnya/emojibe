@@ -50,11 +50,11 @@ class FieldSceneMulti extends Phaser.Scene {
   }
 
   // ── レイアウト定数 ───────────────────────────────────
-  // 上部バー        : y=0   h=44
-  // 相手エリア      : y=44  h=130
-  // フィールドノート : y=179 h=320
-  // プレイヤーエリア : y=504 h=155
-  // ステータス行    : y=663 h=50
+  // 上部バー        : y=0   h=38
+  // 相手エリア      : y=38  h=100
+  // フィールドノート : y=138 h=330
+  // プレイヤーエリア : y=468 h=150
+  // ステータス行    : y=618 h=60
 
   _drawBg(W, H) {
     const bg = this.add.graphics();
@@ -73,18 +73,18 @@ class FieldSceneMulti extends Phaser.Scene {
   _createTopBar(W) {
     const bar = this.add.graphics();
     bar.fillStyle(0x1a1008, 0.9);
-    bar.fillRect(0, 0, W, 44);
-    this.add.text(12, 22, 'えもじべ 対人戦', {
+    bar.fillRect(0, 0, W, 38);
+    this.add.text(12, 19, 'えもじべ 対人戦', {
       fontSize: '13px', color: '#f5e6c8',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
     }).setOrigin(0, 0.5);
-    this.turnInfoText = this.add.text(W - 12, 22, '', {
+    this.turnInfoText = this.add.text(W - 12, 19, '', {
       fontSize: '11px', color: '#c8b090', fontFamily: 'sans-serif'
     }).setOrigin(1, 0.5);
   }
 
   _createOppArea(W) {
-    const x = 10, y = 48, w = W - 20, h = 126;
+    const x = 10, y = 38, w = W - 20, h = 100;
     const sh = this.add.graphics();
     sh.fillStyle(0x000000, 0.18);
     sh.fillRoundedRect(x + 3, y + 3, w, h, 8);
@@ -93,22 +93,22 @@ class FieldSceneMulti extends Phaser.Scene {
     bg.fillRoundedRect(x, y, w, h, 8);
     bg.lineStyle(1, 0xc03020, 0.35);
     bg.strokeRoundedRect(x, y, w, h, 8);
-    this.add.text(W / 2, y + 10, '相 手 の 手 帳', {
+    this.add.text(W / 2, y + 9, '相 手 の 手 帳', {
       fontSize: '10px', color: '#e8a090', fontFamily: 'sans-serif', letterSpacing: 4
     }).setOrigin(0.5);
 
-    // 相手の初期手札行（7枚、サイズ16px）の配置位置を記憶
-    const hSize = 16, hGap = 3;
-    this.oppHandRowY = y + 30;
+    // 相手の初期手札行（7枚、サイズ20px）の配置位置を記憶
+    const hSize = 20, hGap = 3;
+    this.oppHandRowY = y + 26;
     this.oppHandRowX = (W - (7 * hSize + 6 * hGap)) / 2 + hSize / 2;
     this.oppHandStickSize = hSize;
     this.oppHandStickGap  = hGap;
 
-    // 相手の取得スロット（6個、18px）
-    const slotSize = 18, gap = 3;
+    // 相手の取得スロット（6個、22px）
+    const slotSize = 22, gap = 3;
     const totalW = 6 * slotSize + 5 * gap;
     const sx = (W - totalW) / 2;
-    const slotY = y + 80;
+    const slotY = y + 66;
     for (let i = 0; i < 6; i++) {
       const slotX = sx + i * (slotSize + gap) + slotSize / 2;
       const g = this.add.graphics();
@@ -116,13 +116,13 @@ class FieldSceneMulti extends Phaser.Scene {
       g.strokeRoundedRect(slotX - slotSize / 2, slotY - slotSize / 2, slotSize, slotSize, 4);
       this.oppTakenSlots.push({ x: slotX, y: slotY, size: slotSize, gfx: g, img: null });
     }
-    this.oppStatusText = this.add.text(W / 2, y + 110, '', {
+    this.oppStatusText = this.add.text(W / 2, y + 86, '', {
       fontSize: '10px', color: '#e8a090', fontFamily: 'sans-serif'
     }).setOrigin(0.5);
   }
 
   _createFieldNotebook(W) {
-    const x = 10, y = 179, w = W - 20, h = 320;
+    const x = 10, y = 138, w = W - 20, h = 330;
     const sh = this.add.graphics();
     sh.fillStyle(0x000000, 0.25);
     sh.fillRoundedRect(x + 4, y + 4, w, h, 8);
@@ -136,14 +136,14 @@ class FieldSceneMulti extends Phaser.Scene {
     for (let gy = y + 18; gy < y + h; gy += 18) {
       grid.beginPath(); grid.moveTo(x, gy); grid.lineTo(x + w, gy); grid.strokePath();
     }
-    this.add.text(W / 2, y + 14, '場 の シール', {
+    this.add.text(W / 2, y + 12, '場 の シール', {
       fontSize: '10px', color: '#a0988c', fontFamily: 'sans-serif', letterSpacing: 4
     }).setOrigin(0.5);
     this.fieldBounds = { x, y, w, h };
   }
 
   _createPlayerArea(W) {
-    const x = 10, y = 504, w = W - 20, h = 155;
+    const x = 10, y = 468, w = W - 20, h = 150;
     const sh = this.add.graphics();
     sh.fillStyle(0x000000, 0.2);
     sh.fillRoundedRect(x + 3, y + 3, w, h, 8);
@@ -152,17 +152,17 @@ class FieldSceneMulti extends Phaser.Scene {
     nb.fillRoundedRect(x, y, w, h, 8);
     nb.lineStyle(1.5, 0x4a7c59, 0.5);
     nb.strokeRoundedRect(x, y, w, h, 8);
-    this.add.text(W / 2, y + 14, '自 分 の 手 帳', {
+    this.add.text(W / 2, y + 12, '自 分 の 手 帳', {
       fontSize: '10px', color: '#a8d5b5', fontFamily: 'sans-serif', letterSpacing: 4
     }).setOrigin(0.5);
 
     // 自分の取得スロット（6個）
-    const slotSize = 30, gap = 4;
+    const slotSize = 32, gap = 4;
     const totalW = 6 * slotSize + 5 * gap;
     const sx = (W - totalW) / 2;
     for (let i = 0; i < 6; i++) {
       const slotX = sx + i * (slotSize + gap) + slotSize / 2;
-      const slotY = y + 118;
+      const slotY = y + 108;
       const g = this.add.graphics();
       g.lineStyle(1, 0x4a7c59, 0.4);
       g.strokeRoundedRect(slotX - slotSize / 2, slotY - slotSize / 2, slotSize, slotSize, 4);
@@ -171,10 +171,10 @@ class FieldSceneMulti extends Phaser.Scene {
     this.playerBounds = { x, y, w, h };
 
     // ステータス行
-    this.countdownText = this.add.text(W / 2, 672, '', {
+    this.countdownText = this.add.text(W / 2, 635, '', {
       fontSize: '14px', color: '#f5e6c8', fontFamily: 'sans-serif'
     }).setOrigin(0.5);
-    this.turnLabel = this.add.text(W / 2, 700, '', {
+    this.turnLabel = this.add.text(W / 2, 660, '', {
       fontSize: '20px', color: '#d4a853',
       fontFamily: 'Hiragino Maru Gothic Pro, Yu Gothic, sans-serif', fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -182,13 +182,14 @@ class FieldSceneMulti extends Phaser.Scene {
 
   _placeFieldStickers(W) {
     const nb = this.fieldBounds;
-    const cols = 5, rows = 4, size = 40;
-    const innerW = nb.w - 50;
-    const innerH = nb.h - 40;
+    const cols = 5, rows = 4, size = 52;
+    this.fieldStickerSize = size;
+    const innerW = nb.w - 24;
+    const innerH = nb.h - 48;
     const gapX = (innerW - cols * size) / (cols - 1);
     const gapY = (innerH - rows * size) / (rows - 1);
-    const startX = nb.x + 28;
-    const startY = nb.y + 34;
+    const startX = nb.x + 14;
+    const startY = nb.y + 48;
 
     this.fieldEmojis.forEach((emojiData, i) => {
       const col = i % cols;
@@ -209,14 +210,14 @@ class FieldSceneMulti extends Phaser.Scene {
 
   _placePlayerHand(W) {
     const y = this.playerBounds.y;
-    const size = 28, gap = 4;
+    const size = 36, gap = 4;
     const count = this.initialHand.length;
     const totalW = count * size + (count - 1) * gap;
     const startX = (W - totalW) / 2 + size / 2;
 
     this.initialHand.forEach((emojiData, i) => {
       const x = startX + i * (size + gap);
-      const sticker = this._makeSticker(x, y + 70, emojiData, Phaser.Math.Between(-6, 6), 0xf0fff0, size);
+      const sticker = this._makeSticker(x, y + 50, emojiData, Phaser.Math.Between(-6, 6), 0xf0fff0, size);
       this.myHandStickers.push(sticker);
     });
   }
@@ -248,7 +249,7 @@ class FieldSceneMulti extends Phaser.Scene {
       }).setOrigin(0.5);
     } else {
       inner = this.add.image(0, 0, emojiKey(emojiData.emoji))
-        .setDisplaySize(Math.floor(size * 0.65), Math.floor(size * 0.65));
+        .setDisplaySize(Math.floor(size * 0.75), Math.floor(size * 0.75));
     }
     container.add([bg, inner]);
     container.setAngle(angle);
@@ -282,15 +283,16 @@ class FieldSceneMulti extends Phaser.Scene {
     sticker.taken = true;
     sticker.container.disableInteractive();
 
+    const targetScale = slot.size / (this.fieldStickerSize || 52);
     if (animate) {
       this.tweens.add({
         targets: sticker.container,
-        x: slot.x, y: slot.y, scaleX: 0.85, scaleY: 0.85, angle: Phaser.Math.Between(-6, 6),
+        x: slot.x, y: slot.y, scaleX: targetScale, scaleY: targetScale, angle: Phaser.Math.Between(-6, 6),
         duration: 350, ease: 'Back.inOut',
       });
     } else {
       sticker.container.setPosition(slot.x, slot.y);
-      sticker.container.setScale(0.85);
+      sticker.container.setScale(targetScale);
     }
     slot.img = sticker;
   }
@@ -306,7 +308,7 @@ class FieldSceneMulti extends Phaser.Scene {
       if (i >= 6) return;
       const slot = this.oppTakenSlots[i];
       if (slot.img) return;
-      const img = this.add.image(slot.x, slot.y, emojiKey(emojiData.emoji)).setDisplaySize(13, 13);
+      const img = this.add.image(slot.x, slot.y, emojiKey(emojiData.emoji)).setDisplaySize(16, 16);
       slot.img = img;
     });
     const oppTotal = this.oppPicked.length;
@@ -330,7 +332,7 @@ class FieldSceneMulti extends Phaser.Scene {
   _enableFieldInteraction() {
     this.fieldStickers.forEach(st => {
       if (st.taken) return;
-      const size = 40;
+      const size = this.fieldStickerSize || 52;
       st.container.setInteractive(
         new Phaser.Geom.Rectangle(-size / 2 - 2, -size / 2 - 2, size + 4, size + 4),
         Phaser.Geom.Rectangle.Contains
