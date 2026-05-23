@@ -22,8 +22,10 @@ try {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($rows as &$row) {
-        $decoded = json_decode($row['emojis'], true);
-        $row['emojis'] = is_array($decoded) ? $decoded : [];
+        $raw = $row['emojis'] ?? '';
+        $decoded = json_decode($raw, true);
+        // JSON配列ならそのまま、生文字列なら1要素の配列として包む
+        $row['emojis'] = is_array($decoded) ? $decoded : ($raw !== '' ? [$raw] : []);
         $row['ai_score'] = (int)$row['ai_score'];
     }
 
