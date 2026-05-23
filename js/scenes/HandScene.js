@@ -129,12 +129,12 @@ class HandScene extends Phaser.Scene {
       fontFamily: 'sans-serif'
     }).setOrigin(0.5);
 
-    const input = this.add.dom(W / 2, inputY, 'input');
+    const input = this.add.dom(W / 2 - 15, inputY, 'input');
     input.node.type = 'text';
     input.node.placeholder = '例：夕焼けの海、失恋した夜…';
     input.node.maxLength = 20;
     input.node.style.cssText = [
-      'width: 300px',
+      'width: 270px',
       'padding: 10px 16px',
       'font-size: 15px',
       'font-family: Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
