@@ -134,7 +134,7 @@ class HandScene extends Phaser.Scene {
     input.node.placeholder = '例：夕焼けの海、失恋した夜…';
     input.node.maxLength = 20;
     input.node.style.cssText = [
-      'width: 270px',
+      'width: 300px',
       'padding: 10px 16px',
       'font-size: 15px',
       'font-family: Hiragino Maru Gothic Pro, Yu Gothic, sans-serif',
@@ -144,13 +144,9 @@ class HandScene extends Phaser.Scene {
       'text-align: center',
       'outline: none',
       'color: #4a3520',
-      'display: block',
-      'margin: 0',
       'box-sizing: border-box',
-      'position: absolute',
-      'left: 50%',
-      'transform: translateX(-50%)',
     ].join(';');
+    input.setOrigin(0.5, 0.5);
 
     this.inputEl = input;
   }
