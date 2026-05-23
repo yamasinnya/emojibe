@@ -129,7 +129,7 @@ class HandScene extends Phaser.Scene {
       fontFamily: 'sans-serif'
     }).setOrigin(0.5);
 
-    const input = this.add.dom(W / 2 - 25, inputY, 'input');
+    const input = this.add.dom(W / 2 - 45, inputY, 'input');
     input.node.type = 'text';
     input.node.placeholder = '例：夕焼けの海、失恋した夜…';
     input.node.maxLength = 20;
